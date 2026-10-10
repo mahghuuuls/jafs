@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * The two modifiers on the real vanilla attribute instance: vanilla's operation math gives the
  * additive percent rule, reapplying the same sums changes nothing, zero removes, the floor of 1
- * holds, and the modifiers are never saved (REQ-027 to REQ-029, REQ-056, REQ-089).
+ * holds, and the modifiers are saved with the player (REQ-027 to REQ-029, REQ-056, REQ-089, REV-005).
  */
 class MaxHealthApplierTest {
 
@@ -84,11 +84,12 @@ class MaxHealthApplierTest {
     }
 
     @Test
-    void modifiersAreNeverSaved() {
+    void modifiersAreSavedWithThePlayer() {
+        // So vanilla restores the maximum before it clamps the saved health on login (REV-005)
         IAttributeInstance attribute = maxHealth();
         MaxHealthApplier.applyTo(attribute, 4, 10);
         assertNotNull(attribute.getModifier(MaxHealthApplier.FLAT_ID));
-        assertFalse(attribute.getModifier(MaxHealthApplier.FLAT_ID).isSaved());
-        assertFalse(attribute.getModifier(MaxHealthApplier.PERCENT_ID).isSaved());
+        assertTrue(attribute.getModifier(MaxHealthApplier.FLAT_ID).isSaved());
+        assertTrue(attribute.getModifier(MaxHealthApplier.PERCENT_ID).isSaved());
     }
 }

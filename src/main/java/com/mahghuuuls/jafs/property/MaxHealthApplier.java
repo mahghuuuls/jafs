@@ -13,9 +13,11 @@ import java.util.UUID;
 /**
  * Maximum health through two attribute modifiers with fixed ids: operation 0 carries the flat
  * sum, operation 1 the percent sum (vanilla adds all operation-1 amounts before multiplying,
- * which is exactly the additive-percent rule). The resulting maximum never goes below 1: when
- * the sums would take it lower, the percent modifier is dropped and the flat one raised to the
- * floor. After a decrease the current health is capped, which is not damage.
+ * which is exactly the additive-percent rule). The modifiers are saved with the player so that
+ * vanilla restores the maximum before it clamps the saved health on login; a modifier is always
+ * removed by its fixed id before it is reapplied, so nothing duplicates. The resulting maximum
+ * never goes below 1: when the sums would take it lower, the percent modifier is dropped and the
+ * flat one raised to the floor. After a decrease the current health is capped, which is not damage.
  */
 public final class MaxHealthApplier implements IPropertyApplier {
 
@@ -106,7 +108,7 @@ public final class MaxHealthApplier implements IPropertyApplier {
             attribute.removeModifier(id);
         }
         AttributeModifier modifier = new AttributeModifier(id, name, amount, operation);
-        modifier.setSaved(false);
+        modifier.setSaved(true);
         attribute.applyModifier(modifier);
         return true;
     }
