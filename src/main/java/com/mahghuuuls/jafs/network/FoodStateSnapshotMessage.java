@@ -7,7 +7,12 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Server to client: the player's active foods, the rate their timers run at, and the definitions revision. */
+/**
+ * Server to client: the player's active foods, the rate their timers run at, the definitions
+ * revision, and the player's current health. The health lets the client lower its own health
+ * before vanilla's health packet arrives, so a cap after a maximum-health decrease is not
+ * mistaken for a hit (vanilla rolls the camera for any decrease it receives).
+ */
 public final class FoodStateSnapshotMessage implements IMessage {
 
     public static final class Entry {
@@ -27,14 +32,16 @@ public final class FoodStateSnapshotMessage implements IMessage {
     private List<Entry> entries = new ArrayList<Entry>();
     private double effectiveRate = 1.0;
     private long definitionsRevision;
+    private float health;
 
     public FoodStateSnapshotMessage() {
     }
 
-    public FoodStateSnapshotMessage(List<Entry> entries, double effectiveRate, long definitionsRevision) {
+    public FoodStateSnapshotMessage(List<Entry> entries, double effectiveRate, long definitionsRevision, float health) {
         this.entries = entries;
         this.effectiveRate = effectiveRate;
         this.definitionsRevision = definitionsRevision;
+        this.health = health;
     }
 
     public List<Entry> entries() {
@@ -49,10 +56,16 @@ public final class FoodStateSnapshotMessage implements IMessage {
         return definitionsRevision;
     }
 
+    /** The server's current health of the player when the snapshot was taken. */
+    public float health() {
+        return health;
+    }
+
     @Override
     public void fromBytes(ByteBuf buf) {
         definitionsRevision = buf.readLong();
         effectiveRate = buf.readDouble();
+        health = buf.readFloat();
         int count = buf.readByte();
         entries = new ArrayList<Entry>(count);
         for (int i = 0; i < count; i++) {
@@ -64,6 +77,7 @@ public final class FoodStateSnapshotMessage implements IMessage {
     public void toBytes(ByteBuf buf) {
         buf.writeLong(definitionsRevision);
         buf.writeDouble(effectiveRate);
+        buf.writeFloat(health);
         buf.writeByte(entries.size());
         for (Entry entry : entries) {
             ByteBufUtils.writeUTF8String(buf, entry.definitionId);

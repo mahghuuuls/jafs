@@ -66,7 +66,8 @@ public class SyncService {
             entries.add(new FoodStateSnapshotMessage.Entry(slot.definitionId(), slot.remainingTicks(), slot.fullTicks(),
                     ActiveFoodService.isEligible(slot)));
         }
-        JafsNetwork.sendSnapshot(player, new FoodStateSnapshotMessage(entries, effectiveRate, FoodDefinitionFile.current().revision()));
+        JafsNetwork.sendSnapshot(player, new FoodStateSnapshotMessage(entries, effectiveRate, FoodDefinitionFile.current().revision(),
+                player.getHealth()));
         Tracker tracker = tracker(player);
         tracker.dirty = false;
         tracker.ticksSinceSend = 0;

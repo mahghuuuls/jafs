@@ -5,6 +5,7 @@ import com.mahghuuuls.jafs.diagnostic.Diag;
 import com.mahghuuuls.jafs.network.FoodStateSnapshotMessage;
 import com.mahghuuuls.jafs.network.JafsNetwork;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -40,9 +41,23 @@ public final class ClientFoodState implements JafsNetwork.SnapshotSink {
                 entries = Collections.unmodifiableList(message.entries());
                 rate = message.effectiveRate();
                 receivedAtMillis = System.currentTimeMillis();
+                preApplyLowerHealth(message.health());
                 Diag.event("client snapshot foods={} rate={}", entries.size(), rate);
             }
         });
+    }
+
+    /**
+     * A snapshot arrives before vanilla's health packet for the same tick. When the server's
+     * health is lower than ours (a cap after a maximum-health decrease), setting it now makes
+     * vanilla see no decrease when its packet arrives, so it does not roll the camera as for a
+     * hit. Real damage keeps its hit animation: the server sends a separate hurt status for it.
+     */
+    private static void preApplyLowerHealth(float serverHealth) {
+        EntityPlayerSP player = Minecraft.getMinecraft().player;
+        if (player != null && serverHealth >= 0 && serverHealth < player.getHealth()) {
+            player.setHealth(serverHealth);
+        }
     }
 
     public static void clear() {
