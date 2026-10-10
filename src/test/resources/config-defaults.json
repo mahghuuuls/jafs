@@ -1,0 +1,31 @@
+{
+  "_comment": "Authoritative tuning numbers for JAFS requirements (REQ-078). Every other view (requirements text, generated config comments, tests that assert defaults, public documentation) is derived from this file and must be re-checked when a value here changes. Durations in seconds unless stated.",
+  "source": "owner draft brief Section 10, accepted with ranges on 2026-10-08 (owner: all A)",
+  "gameplay": {
+    "activeFoodLimit":        { "default": 3,    "min": 1,    "max": 12,    "unit": "slots",            "scope": "server", "purpose": "Maximum simultaneous active foods per player." },
+    "eligibilityThreshold":   { "default": 50,   "min": 1,    "max": 100,   "unit": "percent",          "scope": "server", "purpose": "An active food is eligible for refresh or replacement when its remaining duration is strictly below this percent of its full duration." },
+    "fullDuration":           { "default": null, "min": 1,    "max": 86400, "unit": "seconds",          "scope": "definition", "purpose": "Full duration per food definition. Mandatory; no global fallback. The documentation examples use 1200 (20 minutes)." },
+    "baseRecoveryRate":       { "default": 5,    "min": 0,    "max": 100,   "unit": "percent of maximum health per second", "scope": "server", "purpose": "Health restored per second once recovery is active." },
+    "recoveryDelay":          { "default": 10,   "min": 0,    "max": 300,   "unit": "seconds",          "scope": "server", "purpose": "Damage-free time before recovery starts." },
+    "depletionRate":          { "default": 1.0,  "min": 0.0,  "max": 10.0,  "unit": "multiplier",       "scope": "server", "purpose": "Speed of active-food timers. 0 pauses natural depletion." },
+    "hungerEffectIncrement":  { "default": 0.5,  "min": 0.0,  "max": 10.0,  "unit": "multiplier per effect level", "scope": "server", "purpose": "Added to the depletion rate for each level of the Hunger effect (level I adds once)." },
+    "keepFoodsOnDeath":       { "default": false, "options": [true, false],  "scope": "server", "purpose": "Whether active foods survive death." },
+    "inhibitedBlocksRecovery": { "default": true, "options": [true, false], "scope": "server", "purpose": "Block recovery while the Inhibited effect is active. Has no effect when Inhibited is not installed." },
+    "pinnedFoodLevel":        { "default": 10,   "fixed": true, "unit": "food points of 20", "scope": "internal", "purpose": "The food level JAFS holds every player at. Not configurable (owner decision 2026-10-08)." }
+  },
+  "client": {
+    "hudAnchor":              { "default": "above-hotbar-left", "scope": "client", "purpose": "Anchor for the active-food HUD. Exact anchor set and offsets are an Architecture decision; the default sits near the hotbar." },
+    "hudOffsetX":             { "default": 0, "min": -1000, "max": 1000, "unit": "pixels", "scope": "client" },
+    "hudOffsetY":             { "default": 0, "min": -1000, "max": 1000, "unit": "pixels", "scope": "client" },
+    "hudScale":               { "default": 1.0,  "min": 0.5,  "max": 3.0,   "unit": "multiplier", "scope": "client", "purpose": "HUD size." },
+    "showUnconfiguredTooltip": { "default": true, "options": [true, false], "scope": "client", "purpose": "Show the 'No food bonuses configured' tooltip line." },
+    "propertyColorOverrides": { "default": {}, "scope": "client", "purpose": "Map of property id to display color, overriding provider defaults." }
+  },
+  "diagnostics": {
+    "diagnosticMode":         { "default": false, "options": [true, false], "scope": "server", "purpose": "Log one line per JAFS decision (see REQ-076). Off by default." }
+  },
+  "syncing": {
+    "timerCorrectionInterval": { "default": 5, "fixed": true, "unit": "seconds", "scope": "internal", "purpose": "How often the server corrects client-side countdowns when nothing else changed." },
+    "clientTimerTolerance":   { "default": 1, "fixed": true, "unit": "seconds", "scope": "internal", "purpose": "Maximum allowed difference between the HUD countdown and the server value." }
+  }
+}

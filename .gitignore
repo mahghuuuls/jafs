@@ -26,3 +26,6 @@ run
 
 # third-party jars used only for development
 libs
+
+# log4j output of JUnit runs that touch Minecraft classes
+logs

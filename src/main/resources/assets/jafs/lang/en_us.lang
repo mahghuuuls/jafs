@@ -1,0 +1,9 @@
+property.jafs.max_health=Max Health
+property.jafs.recovery_rate=Recovery Rate
+property.jafs.depletion_rate=Food Depletion Rate
+
+tooltip.jafs.unconfigured=No food bonuses configured
+tooltip.jafs.duration=Duration: %s
+
+message.jafs.ineligible=You can't eat more %s yet.
+message.jafs.no_slot=No food slot available
