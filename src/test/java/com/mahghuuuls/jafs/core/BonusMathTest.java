@@ -13,6 +13,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class BonusMathTest {
 
     @Test
+    void theHungerEffectAddsItsIncrementPerLevel() {
+        // REQ-045: rate 1.0, increment 0.5: Hunger I 1.5, Hunger II 2.0; no effect leaves the rate
+        assertEquals(1.0, BonusMath.baseDepletionRate(1.0, 0, 0.5), 1e-12);
+        assertEquals(1.5, BonusMath.baseDepletionRate(1.0, 1, 0.5), 1e-12);
+        assertEquals(2.0, BonusMath.baseDepletionRate(1.0, 2, 0.5), 1e-12);
+        // REQ-044: a configured rate of 0 stays 0 without the effect
+        assertEquals(0.0, BonusMath.baseDepletionRate(0.0, 0, 0.5), 0);
+        assertEquals(1.0, BonusMath.baseDepletionRate(0.0, 2, 0.5), 1e-12);
+    }
+
+    @Test
     void flatAmountsAdd() {
         Map<String, BonusMath.Combined> combined = BonusMath.combine(Arrays.asList(
                 new Modifier("jafs:max_health", PropertyOperation.FLAT, 4),

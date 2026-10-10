@@ -16,6 +16,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLLoadCompleteEvent;
+import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 
@@ -41,11 +42,17 @@ public class JustAnotherFoodSystemMod {
         MinecraftForge.EVENT_BUS.register(new FoodStateCapability.Attacher());
         JafsGameplay gameplay = JafsGameplay.create();
         MinecraftForge.EVENT_BUS.register(new TickHook(gameplay.ticker()));
-        MinecraftForge.EVENT_BUS.register(new DamageHook());
+        MinecraftForge.EVENT_BUS.register(new DamageHook(gameplay.recovery()));
         MinecraftForge.EVENT_BUS.register(new ItemUseHook(gameplay.gate()));
         MinecraftForge.EVENT_BUS.register(new LifecycleHandlers(gameplay));
         proxy.preInit();
         Diag.LOGGER.info("{} {} loaded", Tags.MOD_NAME, Tags.VERSION);
+    }
+
+    /** Every mod is loaded: detect the optional ones by id and wire their notices and gates. */
+    @Mod.EventHandler
+    public void postInit(FMLPostInitializationEvent event) {
+        Integrations.wire(JafsGameplay.get());
     }
 
     /** Addons have registered their properties by now, and every item and block id is known. */

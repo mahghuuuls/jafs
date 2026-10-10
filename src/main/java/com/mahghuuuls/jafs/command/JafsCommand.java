@@ -105,9 +105,8 @@ public final class JafsCommand extends CommandBase {
             }
             foods = builder.toString();
         }
-        String recovery = state == null ? "recovery=unknown"
-                : "recovery=not-implemented delayTicks=" + state.recoveryDelayTicks();
         JafsGameplay gameplay = JafsGameplay.get();
+        String recovery = gameplay.recovery().describe(player);
         StringBuilder bonuses = new StringBuilder("bonuses=");
         List<String> described = gameplay.bonuses().describe(player);
         bonuses.append(described.isEmpty() ? "none" : String.join("; ", described));

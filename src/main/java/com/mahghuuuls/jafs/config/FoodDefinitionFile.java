@@ -31,7 +31,9 @@ import java.util.Set;
 /**
  * Owner of {@code config/jafs/foods.json}. Reads, validates, resolves item and block ids against
  * the registries, and swaps the immutable {@link DefinitionSet} held by {@link #current()}.
- * A file-level failure (unreadable, not valid JSON, wrong shape) keeps the previous set.
+ * A file-level failure (unreadable, not valid JSON, wrong shape) keeps the previous set. Reading
+ * ({@link #read}) and swapping ({@link #apply}) are separate so a reload can validate both files
+ * before it swaps either.
  */
 public final class FoodDefinitionFile {
 
@@ -75,6 +77,17 @@ public final class FoodDefinitionFile {
         }
     }
 
+    /** One read of the file: the set to swap in (null on a file-level failure) and its report. */
+    public static final class Candidate {
+        public final DefinitionSet set;
+        public final LoadReport report;
+
+        Candidate(DefinitionSet set, LoadReport report) {
+            this.set = set;
+            this.report = report;
+        }
+    }
+
     private static File file;
     private static File examplesFile;
     private static volatile DefinitionSet current = DefinitionSet.empty();
@@ -98,11 +111,20 @@ public final class FoodDefinitionFile {
         return lastReport;
     }
 
-    /**
-     * Reads and validates the file. Creates an empty file and the examples file when absent.
-     * Must run after registries are populated (load complete or later).
-     */
+    /** Reads, validates, and swaps in one step (startup, or a reload of this file alone). */
     public static LoadReport load(PropertyCatalog catalog) {
+        Candidate candidate = read(catalog);
+        if (!candidate.report.fileLevelFailure) {
+            apply(candidate);
+        }
+        return candidate.report;
+    }
+
+    /**
+     * Reads and validates the file without touching the current set. Creates an empty file and
+     * the examples file when absent. Must run after registries are populated (load complete or later).
+     */
+    public static Candidate read(PropertyCatalog catalog) {
         if (file == null) {
             throw new IllegalStateException("FoodDefinitionFile.setLocation has not been called");
         }
@@ -125,8 +147,7 @@ public final class FoodDefinitionFile {
         DefinitionValidator.Result result = DefinitionValidator.validate(raws, catalog);
         List<FoodDefinition> resolved = resolveIds(result);
         int disabled = removeConflicts(resolved, result.problems);
-        revision++;
-        DefinitionSet set = new DefinitionSet(revision, resolved);
+        DefinitionSet set = new DefinitionSet(revision + 1, resolved);
         LoadReport report = new LoadReport(false, "", resolved.size(), result.inert, disabled, result.rejected, result.problems);
         for (Problem problem : result.problems) {
             if (problem.isError()) {
@@ -135,17 +156,25 @@ public final class FoodDefinitionFile {
                 Diag.LOGGER.warn("foods.json: {}", problem);
             }
         }
-        Diag.LOGGER.info("{} (revision {})", report.summary(), revision);
-        current = set;
-        lastReport = report;
-        return report;
+        return new Candidate(set, report);
     }
 
-    private static LoadReport fail(String message) {
+    /** Makes the candidate's set the working set. */
+    public static void apply(Candidate candidate) {
+        if (candidate.set == null) {
+            return;
+        }
+        revision = candidate.set.revision();
+        current = candidate.set;
+        lastReport = candidate.report;
+        Diag.LOGGER.info("{} (revision {})", candidate.report.summary(), revision);
+    }
+
+    private static Candidate fail(String message) {
         Diag.LOGGER.error("foods.json: {}", message);
         LoadReport report = new LoadReport(true, message, current.size(), 0, 0, 0, new ArrayList<Problem>());
         lastReport = report;
-        return report;
+        return new Candidate(null, report);
     }
 
     /**

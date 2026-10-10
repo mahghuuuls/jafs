@@ -5,6 +5,9 @@ import com.mahghuuuls.jafs.core.FoodDefinition;
 import com.mahghuuuls.jafs.core.FoodSlot;
 import com.mahghuuuls.jafs.core.FoodTimers;
 import com.mahghuuuls.jafs.core.MealRules;
+import com.mahghuuuls.jafs.core.ReloadRules;
+import com.mahghuuuls.jafs.core.DefinitionSet;
+import com.mahghuuuls.jafs.core.DisplayFormat;
 import com.mahghuuuls.jafs.diagnostic.Diag;
 import com.mahghuuuls.jafs.state.FoodStateCapability;
 import com.mahghuuuls.jafs.state.IFoodState;
@@ -113,6 +116,56 @@ public final class ActiveFoodService {
         Diag.event("cleared {} foods for {} ({}): {}", count, player.getName(), cause, ids);
         changed(player, state, cause);
         return count;
+    }
+
+    /**
+     * A successful reload: removed, disabled, or inert definitions clear their instances; a changed
+     * full duration caps the remaining time; modifiers are recomputed from the new definitions
+     * either way (REQ-071). Returns the number of slot changes.
+     */
+    public int applyReloadChanges(EntityPlayerMP player, DefinitionSet definitions) {
+        return applyDefinitions(player, definitions, "reload", false);
+    }
+
+    /**
+     * Login reconciliation (REQ-090): the same consequences for a saved state against the current
+     * definitions, with one warning per player that names the dropped foods. A change recomputes
+     * the bonuses as every change does; the login recompute that follows is idempotent.
+     */
+    public int reconcile(EntityPlayerMP player, DefinitionSet definitions) {
+        return applyDefinitions(player, definitions, "reconcile", true);
+    }
+
+    private int applyDefinitions(EntityPlayerMP player, DefinitionSet definitions, String cause, boolean warnDropped) {
+        IFoodState state = FoodStateCapability.get(player);
+        if (state == null || state.slots().isEmpty()) {
+            return 0;
+        }
+        List<ReloadRules.Change> changes = ReloadRules.apply(state.slots(), definitions);
+        List<String> dropped = new ArrayList<String>();
+        for (ReloadRules.Change change : changes) {
+            switch (change.kind) {
+                case REMOVED:
+                    dropped.add(change.definitionId);
+                    Diag.event("{}: removed {} from {}", cause, change.definitionId, player.getName());
+                    break;
+                case CAPPED:
+                    Diag.event("{}: capped {} remaining to {} for {}", cause, change.definitionId,
+                            DisplayFormat.durationTicks(change.remainingTicks), player.getName());
+                    break;
+                default:
+                    Diag.event("{}: {} full duration is now {} for {}", cause, change.definitionId,
+                            DisplayFormat.durationTicks(change.fullTicks), player.getName());
+                    break;
+            }
+        }
+        if (warnDropped && !dropped.isEmpty()) {
+            Diag.LOGGER.warn("dropped saved foods of {} whose definition no longer exists: {}", player.getName(), dropped);
+        }
+        if (!changes.isEmpty() || !"reconcile".equals(cause)) {
+            changed(player, state, cause);
+        }
+        return changes.size();
     }
 
     public static boolean isEligible(FoodSlot slot) {

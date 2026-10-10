@@ -86,6 +86,15 @@ public final class BonusMath {
         return result;
     }
 
+    /**
+     * The base depletion rate before food modifiers: the configured rate plus the Hunger effect level
+     * times the configured increment (level I adds once, level II twice; REQ-045), never below zero.
+     */
+    public static double baseDepletionRate(double configRate, int hungerLevel, double increment) {
+        double base = configRate + Math.max(0, hungerLevel) * increment;
+        return base < 0 ? 0 : base;
+    }
+
     /** A rate multiplier from a percent sum, never below zero: {@code max(0, 1 + percent / 100)}. */
     public static double rateMultiplier(double percent) {
         double multiplier = 1.0 + percent / 100.0;
