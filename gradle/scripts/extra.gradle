@@ -1,5 +1,56 @@
 // You may write any gradle buildscript component in this file
 // This file is automatically applied after build.gradle + dependencies.gradle is ran
 
-// If you wish to use the default helper methods, uncomment the line below
-// apply from: 'gradle/scripts/helpers.gradle'
+// Development-only fixture addon (src/fixture): compiles against the mod's api package, is packed
+// into its own jar under build/fixture, runs in the dev client and server only when -PjafsFixture
+// is given, and is never part of the mod jar (the jar task packages sourceSets.main only).
+sourceSets {
+    fixture {
+        java.srcDirs = ['src/fixture/java']
+        resources.srcDirs = ['src/fixture/resources']
+        compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+        runtimeClasspath += sourceSets.main.runtimeClasspath + sourceSets.main.output
+    }
+}
+
+// The fixture may import the public api package only; any other mod package fails the build.
+tasks.register('checkFixtureImports') {
+    description = 'Fails when a fixture source imports a JAFS package other than api.'
+    def sources = fileTree('src/fixture/java') { include '**/*.java' }
+    inputs.files(sources)
+    doLast {
+        def bad = []
+        sources.each { file ->
+            file.readLines('UTF-8').eachWithIndex { line, index ->
+                def m = line =~ /^import\s+com\.mahghuuuls\.jafs\.([A-Za-z0-9_.]+);/
+                if (m && !m[0][1].startsWith('api.')) {
+                    bad << "${file.name}:${index + 1}: ${line.trim()}"
+                }
+            }
+        }
+        if (!bad.isEmpty()) {
+            throw new GradleException("fixture sources must import com.mahghuuuls.jafs.api.* only:\n" + bad.join('\n'))
+        }
+    }
+}
+tasks.named('compileFixtureJava').configure { dependsOn 'checkFixtureImports' }
+
+// One jar so FML sees the fixture's classes and its resources (lang, mcmod.info) from one root,
+// the same way the dev run loads the mod itself from its dev jar.
+tasks.register('fixtureJar', Jar) {
+    description = 'Packs the development-only fixture addon for the dev runtime.'
+    from sourceSets.fixture.output
+    archiveBaseName = 'jafsfixture'
+    archiveVersion = ''
+    destinationDirectory = layout.buildDirectory.dir('fixture')
+}
+tasks.named('build').configure { dependsOn 'fixtureJar' }
+
+if (project.hasProperty('jafsFixture')) {
+    ['runClient', 'runServer'].each { taskName ->
+        tasks.named(taskName, JavaExec).configure { JavaExec task ->
+            task.dependsOn 'fixtureJar'
+            task.classpath += files(tasks.named('fixtureJar').map { it.archiveFile })
+        }
+    }
+}

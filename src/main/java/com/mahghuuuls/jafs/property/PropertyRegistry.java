@@ -30,6 +30,11 @@ public final class PropertyRegistry implements PropertyCatalog {
     private PropertyRegistry() {
     }
 
+    /** A separate registry for tests of the registration rules; the mod uses {@link #get()}. */
+    static PropertyRegistry forTests() {
+        return new PropertyRegistry();
+    }
+
     public static PropertyRegistry get() {
         return INSTANCE;
     }

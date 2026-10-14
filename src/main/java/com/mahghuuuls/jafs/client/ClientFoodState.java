@@ -60,6 +60,25 @@ public final class ClientFoodState implements JafsNetwork.SnapshotSink {
         }
     }
 
+    /** The addon-facing view of the local snapshot (api.client), counted down to now. */
+    public static final class ApiSource implements com.mahghuuuls.jafs.api.client.ClientFoodApi.Source {
+        @Override
+        public java.util.List<com.mahghuuuls.jafs.api.ActiveFoodView> snapshot() {
+            java.util.List<com.mahghuuuls.jafs.api.ActiveFoodView> views = new java.util.ArrayList<com.mahghuuuls.jafs.api.ActiveFoodView>();
+            for (FoodStateSnapshotMessage.Entry entry : entries()) {
+                java.util.List<com.mahghuuuls.jafs.api.ModifierView> modifiers = new java.util.ArrayList<com.mahghuuuls.jafs.api.ModifierView>();
+                com.mahghuuuls.jafs.core.FoodDefinition definition = ClientDefinitions.definitions().get(entry.definitionId);
+                if (definition != null) {
+                    for (com.mahghuuuls.jafs.core.Modifier modifier : definition.modifiers()) {
+                        modifiers.add(new com.mahghuuuls.jafs.api.ModifierView(modifier.propertyId(), modifier.operation(), modifier.amount()));
+                    }
+                }
+                views.add(new com.mahghuuuls.jafs.api.ActiveFoodView(entry.definitionId, remainingNow(entry), entry.fullTicks, entry.eligible, modifiers));
+            }
+            return views;
+        }
+    }
+
     public static void clear() {
         entries = Collections.emptyList();
         rate = 1.0;

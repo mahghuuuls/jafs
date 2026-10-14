@@ -3,6 +3,7 @@ package com.mahghuuuls.jafs.gameplay.hooks;
 import com.mahghuuuls.jafs.config.FoodDefinitionFile;
 import com.mahghuuuls.jafs.core.ConsumableKey;
 import com.mahghuuuls.jafs.gameplay.MealGate;
+import com.mahghuuuls.jafs.item.JafsItems;
 import com.mahghuuuls.jafs.network.ItemKeys;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.play.server.SPacketEntityMetadata;
@@ -31,11 +32,16 @@ public final class ItemUseHook {
         if (player == null) {
             return;
         }
-        ConsumableKey key = ItemKeys.of(event.getItem(), FoodDefinitionFile.current());
-        if (key == null) {
-            return;
+        MealGate.Decision decision;
+        if (JafsItems.isBitterBerries(event.getItem())) {
+            decision = gate.beginClear(player);
+        } else {
+            ConsumableKey key = ItemKeys.of(event.getItem(), FoodDefinitionFile.current());
+            if (key == null) {
+                return;
+            }
+            decision = gate.begin(player, key, new TextComponentString(event.getItem().getDisplayName()));
         }
-        MealGate.Decision decision = gate.begin(player, key, new TextComponentString(event.getItem().getDisplayName()));
         if (!decision.accepted) {
             event.setCanceled(true);
             player.sendStatusMessage(decision.message, true);
@@ -53,6 +59,10 @@ public final class ItemUseHook {
     public void onFinish(LivingEntityUseItemEvent.Finish event) {
         EntityPlayerMP player = serverPlayer(event);
         if (player == null) {
+            return;
+        }
+        if (JafsItems.isBitterBerries(event.getItem())) {
+            gate.finishClear(player);
             return;
         }
         gate.finish(player, ItemKeys.of(event.getItem(), FoodDefinitionFile.current()));

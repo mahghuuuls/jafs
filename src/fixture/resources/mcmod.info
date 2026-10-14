@@ -1,0 +1,11 @@
+[
+{
+  "modid": "jafsfixture",
+  "name": "JAFS Fixture",
+  "description": "Development-only fixture addon that exercises the JAFS public API. Never shipped.",
+  "version": "0.0.0",
+  "mcversion": "1.12.2",
+  "authorList": ["Mahghuuuls"],
+  "dependencies": ["jafs"]
+}
+]

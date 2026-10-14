@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "minecraft:apple" },
+    { "item": "minecraft:brown_mushroom" }
+  ],
+  "result": {
+    "item": "jafs:bitter_berries",
+    "count": 1
+  }
+}

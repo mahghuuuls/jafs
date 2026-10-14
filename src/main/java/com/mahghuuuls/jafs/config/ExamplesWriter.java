@@ -62,7 +62,7 @@ public final class ExamplesWriter {
                 + "    ]\n"
                 + "  },\n"
                 + "  {\n"
-                + "    \"_about\": \"A cake: eaten by right-clicking the block, so it is matched by block id. Block matchers need the cake support, which arrives in a later JAFS version; until then this entry loads but does nothing.\",\n"
+                + "    \"_about\": \"A cake: eaten by right-clicking the block, so it is matched by block id (every slice counts as one meal of this food). Add \\\"meta\\\": 0 to match only a whole cake.\",\n"
                 + "    \"id\": \"example_cake\",\n"
                 + "    \"match\": [ { \"block\": \"minecraft:cake\" } ],\n"
                 + "    \"fullDuration\": 300,\n"

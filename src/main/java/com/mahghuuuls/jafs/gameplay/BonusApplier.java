@@ -8,6 +8,7 @@ import com.mahghuuuls.jafs.core.FoodDefinition;
 import com.mahghuuuls.jafs.core.FoodSlot;
 import com.mahghuuuls.jafs.core.Modifier;
 import com.mahghuuuls.jafs.diagnostic.Diag;
+import com.mahghuuuls.jafs.property.ExternalModifierBook;
 import com.mahghuuuls.jafs.property.PropertyRegistry;
 import com.mahghuuuls.jafs.state.FoodStateCapability;
 import com.mahghuuuls.jafs.state.IFoodState;
@@ -28,10 +29,38 @@ public final class BonusApplier implements BonusHook {
     private static final long WARNING_INTERVAL_MILLIS = 60_000L;
 
     private final PropertyRegistry registry;
+    private volatile ExternalModifierBook externals = new ExternalModifierBook();
     private final Map<String, Long> lastWarning = new java.util.HashMap<String, Long>();
 
     public BonusApplier(PropertyRegistry registry) {
         this.registry = registry;
+    }
+
+    /** The addon contributions that join the rate properties (REQ-060). */
+    public void setExternals(ExternalModifierBook book) {
+        this.externals = book == null ? new ExternalModifierBook() : book;
+    }
+
+    public ExternalModifierBook externals() {
+        return externals;
+    }
+
+    /** The food modifiers' sums plus the addon percent for the two rate properties. */
+    private BonusMath.Combined withExternals(EntityPlayerMP player, String propertyId, BonusMath.Combined value) {
+        double external = PropertyRegistry.RECOVERY_RATE.equals(propertyId) ? externals.recoveryPercent(player)
+                : PropertyRegistry.DEPLETION_RATE.equals(propertyId) ? externals.depletionPercent(player) : 0;
+        if (external == 0) {
+            return value;
+        }
+        return new BonusMath.Combined(value.flat(), value.percent() + external, value.contributions() + 1);
+    }
+
+    /** The addon percent sums for the diagnostic line, or an empty string when none. */
+    private String externalsText(EntityPlayerMP player) {
+        if (externals.size() == 0) {
+            return "";
+        }
+        return " external{recovery=" + externals.recoveryPercent(player) + " depletion=" + externals.depletionPercent(player) + "}";
     }
 
     /** The combined modifiers per property for the player's active foods, in property order. */
@@ -62,13 +91,14 @@ public final class BonusApplier implements BonusHook {
             if (value == null) {
                 value = BonusMath.Combined.ZERO;
             }
+            value = withExternals(player, spec.id(), value);
             try {
                 applier.apply(player, value.flat(), value.percent());
             } catch (RuntimeException e) {
                 warnOncePerMinute(spec.id(), player, cause, e);
             }
         }
-        Diag.event("bonuses recomputed for {} ({}): {}", player.getName(), cause, combined);
+        Diag.event("bonuses recomputed for {} ({}): {}{}", player.getName(), cause, combined, externalsText(player));
     }
 
     /** A provider's failure is logged with its stack trace, at most once per property per minute. */

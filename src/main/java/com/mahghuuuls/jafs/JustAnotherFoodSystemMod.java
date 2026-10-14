@@ -6,9 +6,11 @@ import com.mahghuuuls.jafs.config.GameplayConfig;
 import com.mahghuuuls.jafs.diagnostic.Diag;
 import com.mahghuuuls.jafs.gameplay.JafsGameplay;
 import com.mahghuuuls.jafs.gameplay.LifecycleHandlers;
+import com.mahghuuuls.jafs.gameplay.hooks.CakeHook;
 import com.mahghuuuls.jafs.gameplay.hooks.DamageHook;
 import com.mahghuuuls.jafs.gameplay.hooks.ItemUseHook;
 import com.mahghuuuls.jafs.gameplay.hooks.TickHook;
+import com.mahghuuuls.jafs.item.JafsItems;
 import com.mahghuuuls.jafs.network.JafsNetwork;
 import com.mahghuuuls.jafs.property.PropertyRegistry;
 import com.mahghuuuls.jafs.state.FoodStateCapability;
@@ -34,6 +36,7 @@ public class JustAnotherFoodSystemMod {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
+        MinecraftForge.EVENT_BUS.register(new JafsItems());
         GameplayConfig.load(event.getModConfigurationDirectory());
         FoodDefinitionFile.setLocation(event.getModConfigurationDirectory());
         PropertyRegistry.registerCoreProperties();
@@ -44,6 +47,7 @@ public class JustAnotherFoodSystemMod {
         MinecraftForge.EVENT_BUS.register(new TickHook(gameplay.ticker()));
         MinecraftForge.EVENT_BUS.register(new DamageHook(gameplay.recovery()));
         MinecraftForge.EVENT_BUS.register(new ItemUseHook(gameplay.gate()));
+        MinecraftForge.EVENT_BUS.register(new CakeHook(gameplay.gate(), proxy));
         MinecraftForge.EVENT_BUS.register(new LifecycleHandlers(gameplay));
         proxy.preInit();
         Diag.LOGGER.info("{} {} loaded", Tags.MOD_NAME, Tags.VERSION);

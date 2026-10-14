@@ -12,6 +12,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /** The three core properties, their limits (REQ-056), and duplicate rejection. */
 class PropertyRegistryTest {
 
+    private static final com.mahghuuuls.jafs.api.IPropertyApplier NO_OP = new com.mahghuuuls.jafs.api.IPropertyApplier() {
+        @Override
+        public void apply(net.minecraft.entity.player.EntityPlayerMP player, double flatSum, double percentSum) {
+        }
+    };
+
     @Test
     void corePropertiesCarryTheApprovedOperationsAndLimits() {
         PropertyRegistry registry = PropertyRegistry.get();
@@ -31,6 +37,26 @@ class PropertyRegistryTest {
         assertEquals(-1000, recovery.range(PropertyOperation.PERCENT).min(), 1e-9);
         assertTrue(registry.find(PropertyRegistry.DEPLETION_RATE).supports(PropertyOperation.PERCENT));
         assertEquals(3, registry.all().size());
+    }
+
+    @Test
+    void registrationIsRefusedAfterTheFreezeNamingTheProperty() {
+        PropertyRegistry registry = PropertyRegistry.forTests();
+        registry.register(PropertySpec.builder("addon:early").displayNameKey("x").unit("").color("aqua")
+                .operation(PropertyOperation.FLAT, -1, 1).build(), NO_OP);
+        registry.freeze();
+        assertTrue(registry.isFrozen());
+        IllegalStateException error = org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
+                new org.junit.jupiter.api.function.Executable() {
+                    @Override
+                    public void execute() {
+                        registry.register(PropertySpec.builder("addon:late").displayNameKey("x").unit("").color("aqua")
+                                .operation(PropertyOperation.FLAT, -1, 1).build(), NO_OP);
+                    }
+                });
+        assertTrue(error.getMessage().contains("addon:late"), error.getMessage());
+        assertTrue(error.getMessage().contains("closed"), error.getMessage());
+        org.junit.jupiter.api.Assertions.assertNotNull(registry.find("addon:early"));
     }
 
     @Test

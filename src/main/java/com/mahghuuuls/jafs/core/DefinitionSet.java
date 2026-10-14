@@ -89,6 +89,22 @@ public final class DefinitionSet {
     }
 
     /**
+     * The definition that applies to a consumable and grants an active food, or null: none, a
+     * same-priority conflict, or a definition without a valid modifier (inert).
+     */
+    public FoodDefinition configured(ConsumableKey key) {
+        if (key == null) {
+            return null;
+        }
+        Resolution resolution = resolve(key);
+        if (resolution.isConflict()) {
+            return null;
+        }
+        FoodDefinition definition = resolution.definition();
+        return definition != null && definition.hasModifiers() ? definition : null;
+    }
+
+    /**
      * Resolves a consumable: the highest-priority matching definition wins; several at the same
      * highest priority is a conflict and nothing matches.
      */

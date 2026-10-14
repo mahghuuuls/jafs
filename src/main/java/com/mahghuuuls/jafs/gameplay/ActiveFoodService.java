@@ -1,5 +1,6 @@
 package com.mahghuuuls.jafs.gameplay;
 
+import com.mahghuuuls.jafs.api.PaymentResult;
 import com.mahghuuuls.jafs.config.GameplayConfig;
 import com.mahghuuuls.jafs.core.FoodDefinition;
 import com.mahghuuuls.jafs.core.FoodSlot;
@@ -99,6 +100,58 @@ public final class ActiveFoodService {
             Diag.event("expired {} for {}", slot.definitionId(), player.getName());
         }
         changed(player, state, "expiration");
+    }
+
+    /** The largest cost in seconds that fits the tick arithmetic; anything above is never affordable. */
+    public static final int MAX_PAYMENT_SECONDS = Integer.MAX_VALUE / FoodDefinition.TICKS_PER_SECOND;
+
+    /** Whether a payment of the seconds would succeed now (REQ-048). */
+    public boolean canPay(EntityPlayerMP player, int seconds) {
+        IFoodState state = FoodStateCapability.get(player);
+        if (state == null || seconds > MAX_PAYMENT_SECONDS) {
+            return false;
+        }
+        return FoodTimers.canPay(state.slots(), Math.max(0, seconds) * FoodDefinition.TICKS_PER_SECOND);
+    }
+
+    /**
+     * A duration payment (REQ-047 to REQ-050): one check and deduction on the server thread;
+     * foods that reach zero expire with the usual consequences; a failed payment changes nothing.
+     */
+    public PaymentResult pay(EntityPlayerMP player, int seconds, String cause) {
+        if (player.getServer() == null || !player.getServer().isCallingFromMinecraftThread()) {
+            Diag.event("payment {}s by {} for {} refused: not on the server thread", seconds, cause, player.getName());
+            return PaymentResult.failed(PaymentResult.Status.NOT_ON_SERVER, seconds);
+        }
+        IFoodState state = FoodStateCapability.get(player);
+        if (state == null) {
+            return PaymentResult.failed(PaymentResult.Status.NOT_ON_SERVER, seconds);
+        }
+        if (seconds > MAX_PAYMENT_SECONDS) {
+            Diag.event("payment {}s by {} for {}: failed, cost beyond the supported range", seconds, cause, player.getName());
+            return PaymentResult.failed(PaymentResult.Status.NOT_AFFORDABLE, seconds);
+        }
+        if (seconds > 0 && state.slots().isEmpty()) {
+            Diag.event("payment {}s by {} for {}: failed, no active food", seconds, cause, player.getName());
+            return PaymentResult.failed(PaymentResult.Status.NO_ACTIVE_FOOD, seconds);
+        }
+        int ticks = Math.max(0, seconds) * FoodDefinition.TICKS_PER_SECOND;
+        List<FoodSlot> expired = FoodTimers.pay(state.slots(), ticks);
+        if (expired == null) {
+            Diag.event("payment {}s by {} for {}: failed, no food covers the cost", seconds, cause, player.getName());
+            return PaymentResult.failed(PaymentResult.Status.NOT_AFFORDABLE, seconds);
+        }
+        List<String> expiredIds = new ArrayList<String>();
+        for (FoodSlot slot : expired) {
+            state.slots().remove(slot);
+            expiredIds.add(slot.definitionId());
+            Diag.event("expired {} for {} (payment)", slot.definitionId(), player.getName());
+        }
+        Diag.event("payment {}s by {} for {}: ok, expired={}", seconds, cause, player.getName(), expiredIds);
+        if (ticks > 0) {
+            changed(player, state, "payment");
+        }
+        return new PaymentResult(PaymentResult.Status.SUCCESS, seconds, expiredIds);
     }
 
     /** Removes every active food; returns how many were removed. */

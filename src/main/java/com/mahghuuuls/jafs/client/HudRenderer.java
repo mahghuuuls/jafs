@@ -1,5 +1,6 @@
 package com.mahghuuuls.jafs.client;
 
+import com.mahghuuuls.jafs.api.client.FoodHudRenderEvent;
 import com.mahghuuuls.jafs.core.DisplayFormat;
 import com.mahghuuuls.jafs.core.FoodDefinition;
 import com.mahghuuuls.jafs.core.Matcher;
@@ -14,6 +15,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.GuiIngameForge;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -38,14 +40,18 @@ public final class HudRenderer {
         if (event.getType() != RenderGameOverlayEvent.ElementType.ALL) {
             return;
         }
+        ScaledResolution resolution = event.getResolution();
+        int width = resolution.getScaledWidth();
+        int height = resolution.getScaledHeight();
+        // Addons may cancel to draw their own HUD; posted on every frame, foods or not.
+        if (MinecraftForge.EVENT_BUS.post(new FoodHudRenderEvent(width, height))) {
+            return;
+        }
         List<FoodStateSnapshotMessage.Entry> entries = ClientFoodState.entries();
         if (entries.isEmpty()) {
             return;
         }
         Minecraft mc = Minecraft.getMinecraft();
-        ScaledResolution resolution = event.getResolution();
-        int width = resolution.getScaledWidth();
-        int height = resolution.getScaledHeight();
         float scale = ClientPreferences.hudScale();
         int rowWidth = entries.size() * SLOT_WIDTH;
         int rowHeight = ICON + 2 + mc.fontRenderer.FONT_HEIGHT;

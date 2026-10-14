@@ -1,5 +1,7 @@
 package com.mahghuuuls.jafs.gameplay;
 
+import com.mahghuuuls.jafs.api.JafsApi;
+import com.mahghuuuls.jafs.property.ExternalModifierBook;
 import com.mahghuuuls.jafs.property.PropertyRegistry;
 
 /** The server-side object graph: one service, one gate, one ticker, one sync, one bonus applier, one recovery service. Built in pre-init. */
@@ -14,12 +16,14 @@ public final class JafsGameplay {
     private final BonusApplier bonuses;
     private final RecoveryService recovery;
     private final OperatorNotices notices = new OperatorNotices();
+    private final ExternalModifierBook externals = new ExternalModifierBook();
 
     private JafsGameplay() {
         this.service = new ActiveFoodService();
         this.sync = new SyncService();
         this.service.setSyncService(sync);
         this.bonuses = new BonusApplier(PropertyRegistry.get());
+        this.bonuses.setExternals(externals);
         this.service.setBonusHook(bonuses);
         this.gate = new MealGate(service);
         this.recovery = new RecoveryService(PropertyRegistry.get().rates());
@@ -29,6 +33,8 @@ public final class JafsGameplay {
     public static JafsGameplay create() {
         if (instance == null) {
             instance = new JafsGameplay();
+            JafsApi.bind(new ApiControl(new FoodServiceApi(instance.service, instance.bonuses), PropertyRegistry.get(),
+                    instance.externals, instance.bonuses, instance.sync));
         }
         return instance;
     }
@@ -66,5 +72,9 @@ public final class JafsGameplay {
 
     public OperatorNotices notices() {
         return notices;
+    }
+
+    public ExternalModifierBook externals() {
+        return externals;
     }
 }

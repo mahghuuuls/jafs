@@ -24,6 +24,18 @@ class BonusMathTest {
     }
 
     @Test
+    void anAddonPropertyCombinesLikeAnyOther() {
+        java.util.Map<String, BonusMath.Combined> combined = BonusMath.combine(java.util.Arrays.asList(
+                new Modifier("jafsfixture:stamina", PropertyOperation.FLAT, 10),
+                new Modifier("jafs:max_health", PropertyOperation.FLAT, 4),
+                new Modifier("jafsfixture:stamina", PropertyOperation.PERCENT, 25)));
+        assertEquals(10, combined.get("jafsfixture:stamina").flat(), 1e-12);
+        assertEquals(25, combined.get("jafsfixture:stamina").percent(), 1e-12);
+        assertEquals(2, combined.get("jafsfixture:stamina").contributions());
+        assertEquals(4, combined.get("jafs:max_health").flat(), 1e-12);
+    }
+
+    @Test
     void flatAmountsAdd() {
         Map<String, BonusMath.Combined> combined = BonusMath.combine(Arrays.asList(
                 new Modifier("jafs:max_health", PropertyOperation.FLAT, 4),
