@@ -19,6 +19,7 @@ public final class ClientProxy extends CommonProxy {
     public void preInit() {
         // The annotation config was read before preInit; parse it once, then on every GUI save.
         ClientPreferences.reload();
+        ClientConfig.offerValuesInGui();
         MinecraftForge.EVENT_BUS.register(new ClientModels());
         MinecraftForge.EVENT_BUS.register(new HungerBarHider());
         MinecraftForge.EVENT_BUS.register(new TooltipHandler());

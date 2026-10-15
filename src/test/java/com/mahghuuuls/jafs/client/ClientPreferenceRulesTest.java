@@ -23,7 +23,7 @@ class ClientPreferenceRulesTest {
 
     @Test
     void defaultsParseWithoutProblems() {
-        ClientPreferenceRules.Parsed p = ClientPreferenceRules.parse(ClientDefaults.HUD_ANCHOR, ClientDefaults.HUD_OFFSET_X,
+        ClientPreferenceRules.Parsed p = ClientPreferenceRules.parse(ClientDefaults.HUD_ANCHOR, ClientDefaults.HUD_GROWTH, ClientDefaults.HUD_OFFSET_X,
                 ClientDefaults.HUD_OFFSET_Y, ClientDefaults.HUD_SCALE, ClientDefaults.SHOW_UNCONFIGURED_TOOLTIP,
                 ClientDefaults.PROPERTY_COLOR_OVERRIDES, NAMES);
         assertTrue(p.problems.isEmpty(), p.problems.toString());
@@ -35,10 +35,11 @@ class ClientPreferenceRulesTest {
 
     @Test
     void configuredValuesAreKept() {
-        ClientPreferenceRules.Parsed p = ClientPreferenceRules.parse("top-right", 12, -7, 2.0, false,
+        ClientPreferenceRules.Parsed p = ClientPreferenceRules.parse("top-right", "bottom-to-top", 12, -7, 2.0, false,
                 new String[] {"jafs:max_health=blue", "jafsfixture:stamina = Gold "}, NAMES);
         assertTrue(p.problems.isEmpty(), p.problems.toString());
         assertEquals(HudLayout.Anchor.TOP_RIGHT, p.anchor);
+        assertEquals(HudLayout.Growth.BOTTOM_TO_TOP, p.growth);
         assertEquals(12, p.offsetX);
         assertEquals(-7, p.offsetY);
         assertEquals(2.0f, p.scale);
@@ -49,16 +50,18 @@ class ClientPreferenceRulesTest {
 
     @Test
     void unknownAnchorFallsBackToTheDefaultAndSaysSo() {
-        ClientPreferenceRules.Parsed p = ClientPreferenceRules.parse("middle", 0, 0, 1.0, true, null, NAMES);
+        ClientPreferenceRules.Parsed p = ClientPreferenceRules.parse("middle", "sideways", 0, 0, 1.0, true, null, NAMES);
         assertEquals(HudLayout.Anchor.ABOVE_HOTBAR_LEFT, p.anchor);
-        assertEquals(1, p.problems.size());
+        assertEquals(HudLayout.Growth.LEFT_TO_RIGHT, p.growth);
+        assertEquals(2, p.problems.size());
         assertTrue(p.problems.get(0).contains("hudAnchor 'middle'"));
         assertTrue(p.problems.get(0).contains("above-hotbar-left"));
+        assertTrue(p.problems.get(1).contains("hudGrowth 'sideways'"));
     }
 
     @Test
     void outOfRangeNumbersFallBackToTheirDefaults() {
-        ClientPreferenceRules.Parsed p = ClientPreferenceRules.parse("top-left", 5000, -5000, 9.0, true, null, NAMES);
+        ClientPreferenceRules.Parsed p = ClientPreferenceRules.parse("top-left", "left-to-right", 5000, -5000, 9.0, true, null, NAMES);
         assertEquals(ClientDefaults.HUD_OFFSET_X, p.offsetX);
         assertEquals(ClientDefaults.HUD_OFFSET_Y, p.offsetY);
         assertEquals((float) ClientDefaults.HUD_SCALE, p.scale);
@@ -70,7 +73,7 @@ class ClientPreferenceRulesTest {
 
     @Test
     void badOverrideLinesAreIgnoredOneByOne() {
-        ClientPreferenceRules.Parsed p = ClientPreferenceRules.parse("top-left", 0, 0, 1.0, true,
+        ClientPreferenceRules.Parsed p = ClientPreferenceRules.parse("top-left", "left-to-right", 0, 0, 1.0, true,
                 new String[] {"jafs:max_health=blue", "no-equals", "=blue", "jafs:recovery_rate=", "jafs:depletion_rate=purple", "", null}, NAMES);
         assertEquals(1, p.colorOverrides.size());
         assertEquals("blue", p.colorOverrides.get("jafs:max_health"));

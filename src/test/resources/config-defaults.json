@@ -14,7 +14,8 @@
     "pinnedFoodLevel":        { "default": 10,   "fixed": true, "unit": "food points of 20", "scope": "internal", "purpose": "The food level JAFS holds every player at. Not configurable (owner decision 2026-10-08)." }
   },
   "client": {
-    "hudAnchor":              { "default": "above-hotbar-left", "scope": "client", "purpose": "Anchor for the active-food HUD. Exact anchor set and offsets are an Architecture decision; the default sits near the hotbar." },
+    "hudAnchor":              { "default": "above-hotbar-left", "options": ["above-hotbar-left", "above-hotbar-right", "top-left", "top-right", "middle-left", "middle-right", "bottom-left", "bottom-right"], "scope": "client", "purpose": "Anchor for the active-food HUD (REV-012 added the middle pair); the default sits near the hotbar." },
+    "hudGrowth":              { "default": "left-to-right", "options": ["left-to-right", "right-to-left", "top-to-bottom", "bottom-to-top"], "scope": "client", "purpose": "Row or column layout of the HUD slots and the end the first slot starts from (REV-012)." },
     "hudOffsetX":             { "default": 0, "min": -1000, "max": 1000, "unit": "pixels", "scope": "client" },
     "hudOffsetY":             { "default": 0, "min": -1000, "max": 1000, "unit": "pixels", "scope": "client" },
     "hudScale":               { "default": 1.0,  "min": 0.5,  "max": 3.0,   "unit": "multiplier", "scope": "client", "purpose": "HUD size." },

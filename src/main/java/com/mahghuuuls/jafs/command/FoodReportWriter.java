@@ -137,8 +137,17 @@ final class FoodReportWriter {
         return false;
     }
 
-    /** Eaten items are foods, drunk items are drinks, the rest are not listed. */
+    /**
+     * Eaten items are foods, drunk items are drinks, the rest are not listed. Splash and lingering
+     * potions (each its own subclass of the potion item) inherit the drink action but are thrown,
+     * so they are left out; JAFS's own Bitter Berries clear foods and can never carry a definition,
+     * so they are left out too.
+     */
     static FoodReport.Kind kindOf(ItemStack stack) {
+        if (stack.getItem() instanceof net.minecraft.item.ItemSplashPotion || stack.getItem() instanceof net.minecraft.item.ItemLingeringPotion
+                || com.mahghuuuls.jafs.item.JafsItems.isBitterBerries(stack)) {
+            return null;
+        }
         EnumAction action = stack.getItemUseAction();
         if (action == EnumAction.EAT || stack.getItem() instanceof ItemFood) {
             return FoodReport.Kind.FOOD;

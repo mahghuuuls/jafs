@@ -19,6 +19,7 @@ public final class ClientPreferenceRules {
     /** One parse of every raw value. */
     public static final class Parsed {
         public final HudLayout.Anchor anchor;
+        public final HudLayout.Growth growth;
         public final int offsetX;
         public final int offsetY;
         public final float scale;
@@ -28,9 +29,10 @@ public final class ClientPreferenceRules {
         /** Human-readable fallbacks, empty when every value was usable. */
         public final List<String> problems;
 
-        Parsed(HudLayout.Anchor anchor, int offsetX, int offsetY, float scale, boolean showUnconfiguredTooltip,
+        Parsed(HudLayout.Anchor anchor, HudLayout.Growth growth, int offsetX, int offsetY, float scale, boolean showUnconfiguredTooltip,
                Map<String, String> colorOverrides, List<String> problems) {
             this.anchor = anchor;
+            this.growth = growth;
             this.offsetX = offsetX;
             this.offsetY = offsetY;
             this.scale = scale;
@@ -48,7 +50,7 @@ public final class ClientPreferenceRules {
     private ClientPreferenceRules() {
     }
 
-    public static Parsed parse(String anchorText, int offsetX, int offsetY, double scale, boolean showUnconfiguredTooltip,
+    public static Parsed parse(String anchorText, String growthText, int offsetX, int offsetY, double scale, boolean showUnconfiguredTooltip,
                                String[] colorOverrideLines, ColorNames colors) {
         List<String> problems = new ArrayList<String>();
         HudLayout.Anchor anchor = HudLayout.Anchor.parse(anchorText);
@@ -56,6 +58,12 @@ public final class ClientPreferenceRules {
             anchor = HudLayout.Anchor.parse(ClientDefaults.HUD_ANCHOR);
             problems.add("hudAnchor '" + anchorText + "' is not one of " + String.join(", ", HudLayout.Anchor.names())
                     + "; using " + ClientDefaults.HUD_ANCHOR);
+        }
+        HudLayout.Growth growth = HudLayout.Growth.parse(growthText);
+        if (growth == null) {
+            growth = HudLayout.Growth.parse(ClientDefaults.HUD_GROWTH);
+            problems.add("hudGrowth '" + growthText + "' is not one of " + String.join(", ", HudLayout.Growth.names())
+                    + "; using " + ClientDefaults.HUD_GROWTH);
         }
         int x = inRangeOrDefault("hudOffsetX", offsetX, ClientDefaults.HUD_OFFSET_X, problems);
         int y = inRangeOrDefault("hudOffsetY", offsetY, ClientDefaults.HUD_OFFSET_Y, problems);
@@ -71,7 +79,7 @@ public final class ClientPreferenceRules {
                 parseOverride(line, colors, overrides, problems);
             }
         }
-        return new Parsed(anchor, x, y, (float) s, showUnconfiguredTooltip, overrides, problems);
+        return new Parsed(anchor, growth, x, y, (float) s, showUnconfiguredTooltip, overrides, problems);
     }
 
     private static int inRangeOrDefault(String name, int value, int fallback, List<String> problems) {

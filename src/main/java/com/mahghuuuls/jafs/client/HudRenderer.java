@@ -25,14 +25,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
 
 /**
- * Draws the active foods: one item icon per slot in slot order with the remaining time under it,
- * and a steady border around a food that can be refreshed or replaced. Drawn after the whole
- * vanilla overlay so the health rows (whose height depends on maximum health) are known.
+ * Draws the active foods: one cell per slot, each an item icon with the time left under it, and
+ * a steady border around a food that can be refreshed or replaced. The cells run in a row or a
+ * column from the configured anchor (REQ-063, REV-012). Drawn after the whole vanilla overlay so
+ * the health rows (whose height depends on maximum health) are known.
  */
 @SideOnly(Side.CLIENT)
 public final class HudRenderer {
 
-    private static final int SLOT_WIDTH = 28;
     private static final int ICON = 16;
     private static final int BORDER_COLOR = 0xFFF0E68C;
     private static final int TEXT_COLOR = 0xFFFFFFFF;
@@ -41,6 +41,8 @@ public final class HudRenderer {
      * Two capital i letters: the font draws the bar character with a gap, which reads as four bars.
      */
     static final String PAUSED_MARK = "II";
+    /** The widest compact time under ten hours; cells are at least this wide so the block keeps its size. */
+    static final String WIDEST_USUAL_TIME = "0h00";
 
     @SubscribeEvent
     public void onPostRender(RenderGameOverlayEvent.Post event) {
@@ -61,37 +63,57 @@ public final class HudRenderer {
         Minecraft mc = Minecraft.getMinecraft();
         ClientPreferenceRules.Parsed prefs = ClientPreferences.current();
         float scale = prefs.scale;
-        // The drawn width: every slot but the last takes its full pitch; the last is its icon.
-        int rowWidth = (entries.size() - 1) * SLOT_WIDTH + ICON;
-        int rowHeight = ICON + 2 + mc.fontRenderer.FONT_HEIGHT;
-        int x = ClientPreferences.hudX(prefs, width, rowWidth);
-        int y = ClientPreferences.hudY(prefs, height, rowHeight, GuiIngameForge.left_height);
+        int count = entries.size();
+
+        // The times first: a cell is as wide as its icon, the widest usual time (so the block does
+        // not jump as times shorten), or a wider time when one occurs; the text never runs past the
+        // block (REV-012).
+        String[] times = new String[count];
+        int cellWidth = Math.max(ICON, mc.fontRenderer.getStringWidth(WIDEST_USUAL_TIME));
+        for (int i = 0; i < count; i++) {
+            times[i] = timeFor(entries.get(i));
+            cellWidth = Math.max(cellWidth, mc.fontRenderer.getStringWidth(times[i]));
+        }
+        int cellHeight = ICON + 2 + mc.fontRenderer.FONT_HEIGHT;
+        int blockWidth = HudLayout.blockWidth(prefs.growth, count, cellWidth);
+        int blockHeight = HudLayout.blockHeight(prefs.growth, count, cellHeight);
+        int x = ClientPreferences.hudX(prefs, width, blockWidth);
+        int y = ClientPreferences.hudY(prefs, height, blockHeight, GuiIngameForge.left_height);
 
         GlStateManager.pushMatrix();
         GlStateManager.translate(x, y, 0);
         GlStateManager.scale(scale, scale, 1);
         RenderHelper.enableGUIStandardItemLighting();
-        for (int i = 0; i < entries.size(); i++) {
+        for (int i = 0; i < count; i++) {
             FoodStateSnapshotMessage.Entry entry = entries.get(i);
-            int slotX = i * SLOT_WIDTH;
+            int along = HudLayout.slotOffset(prefs.growth, i, count, prefs.growth.horizontal ? cellWidth : cellHeight);
+            int cellX = prefs.growth.horizontal ? along : 0;
+            int cellY = prefs.growth.horizontal ? 0 : along;
+            // The icon sits at the cell's left; the time under it, left-aligned with the icon.
             ItemStack icon = iconFor(entry.definitionId);
             if (entry.eligible) {
-                Gui.drawRect(slotX - 1, -1, slotX + ICON + 1, ICON + 1, BORDER_COLOR);
-                Gui.drawRect(slotX, 0, slotX + ICON, ICON, 0xFF000000);
+                Gui.drawRect(cellX - 1, cellY - 1, cellX + ICON + 1, cellY + ICON + 1, BORDER_COLOR);
+                Gui.drawRect(cellX, cellY, cellX + ICON, cellY + ICON, 0xFF000000);
             }
             if (!icon.isEmpty()) {
-                mc.getRenderItem().renderItemAndEffectIntoGUI(icon, slotX, 0);
+                mc.getRenderItem().renderItemAndEffectIntoGUI(icon, cellX, cellY);
             }
-            // Real time left at the current rate (REV-009): a half-speed food shows twice its fuel; paused shows a mark.
-            int realTicks = ClientFoodState.realTicksLeft(entry);
-            String time = realTicks < 0 ? PAUSED_MARK : DisplayFormat.durationTicks(realTicks);
             GlStateManager.disableLighting();
             GlStateManager.disableDepth();
-            mc.fontRenderer.drawStringWithShadow(time, slotX, ICON + 2, TEXT_COLOR);
+            mc.fontRenderer.drawStringWithShadow(times[i], cellX, cellY + ICON + 2, TEXT_COLOR);
             GlStateManager.enableDepth();
         }
         RenderHelper.disableStandardItemLighting();
         GlStateManager.popMatrix();
+    }
+
+    /**
+     * The time left at the current rate (REV-009), compact (REV-012): {@code 19m} while a minute or
+     * more is left, {@code 45s} under a minute, {@code 1h05} for an hour or more; a mark while paused.
+     */
+    static String timeFor(FoodStateSnapshotMessage.Entry entry) {
+        int realTicks = ClientFoodState.realTicksLeft(entry);
+        return realTicks < 0 ? PAUSED_MARK : DisplayFormat.compactDurationTicks(realTicks);
     }
 
     /**

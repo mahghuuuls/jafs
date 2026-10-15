@@ -22,7 +22,7 @@ public final class ClientPreferences {
     };
 
     private static volatile ClientPreferenceRules.Parsed current = ClientPreferenceRules.parse(
-            ClientDefaults.HUD_ANCHOR, ClientDefaults.HUD_OFFSET_X, ClientDefaults.HUD_OFFSET_Y, ClientDefaults.HUD_SCALE,
+            ClientDefaults.HUD_ANCHOR, ClientDefaults.HUD_GROWTH, ClientDefaults.HUD_OFFSET_X, ClientDefaults.HUD_OFFSET_Y, ClientDefaults.HUD_SCALE,
             ClientDefaults.SHOW_UNCONFIGURED_TOOLTIP, ClientDefaults.PROPERTY_COLOR_OVERRIDES, VANILLA_COLORS);
 
     private ClientPreferences() {
@@ -30,7 +30,7 @@ public final class ClientPreferences {
 
     /** Re-read {@link ClientConfig}; every fallback is logged once per reload (REQ-077). */
     public static void reload() {
-        ClientPreferenceRules.Parsed parsed = ClientPreferenceRules.parse(ClientConfig.hudAnchor, ClientConfig.hudOffsetX,
+        ClientPreferenceRules.Parsed parsed = ClientPreferenceRules.parse(ClientConfig.hudAnchor, ClientConfig.hudGrowth, ClientConfig.hudOffsetX,
                 ClientConfig.hudOffsetY, ClientConfig.hudScale, ClientConfig.showUnconfiguredTooltip,
                 ClientConfig.propertyColorOverrides, VANILLA_COLORS);
         for (String problem : parsed.problems) {
@@ -42,7 +42,7 @@ public final class ClientPreferences {
     /** One line for the log: the values in effect. */
     public static String describe() {
         ClientPreferenceRules.Parsed p = current;
-        return "anchor=" + p.anchor.name + " offset=" + p.offsetX + "," + p.offsetY + " scale=" + p.scale
+        return "anchor=" + p.anchor.name + " growth=" + p.growth.name + " offset=" + p.offsetX + "," + p.offsetY + " scale=" + p.scale
                 + " unconfiguredTooltip=" + p.showUnconfiguredTooltip + " colorOverrides=" + p.colorOverrides;
     }
 

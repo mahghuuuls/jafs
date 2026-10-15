@@ -64,6 +64,9 @@ class ConfigDefaultsParityTest {
     void clientKeysMatchTheAuthorityFile() throws Exception {
         JsonObject client = load().getAsJsonObject("client");
         assertEquals(entry(client, "hudAnchor").get("default").getAsString(), com.mahghuuuls.jafs.client.ClientDefaults.HUD_ANCHOR);
+        assertEquals(entry(client, "hudGrowth").get("default").getAsString(), com.mahghuuuls.jafs.client.ClientDefaults.HUD_GROWTH);
+        assertEquals(java.util.Arrays.asList(com.mahghuuuls.jafs.client.HudLayout.Anchor.names()), names(entry(client, "hudAnchor")));
+        assertEquals(java.util.Arrays.asList(com.mahghuuuls.jafs.client.HudLayout.Growth.names()), names(entry(client, "hudGrowth")));
         for (String key : new String[] {"hudOffsetX", "hudOffsetY"}) {
             JsonObject e = entry(client, key);
             assertEquals(e.get("default").getAsInt(), "hudOffsetX".equals(key)
@@ -85,7 +88,7 @@ class ConfigDefaultsParityTest {
     void everyClientScopeEntryInTheAuthorityFileHasADefault() throws Exception {
         JsonObject root = load();
         java.util.Set<String> known = new java.util.HashSet<String>(java.util.Arrays.asList(
-                "hudAnchor", "hudOffsetX", "hudOffsetY", "hudScale", "showUnconfiguredTooltip", "propertyColorOverrides"));
+                "hudAnchor", "hudGrowth", "hudOffsetX", "hudOffsetY", "hudScale", "showUnconfiguredTooltip", "propertyColorOverrides"));
         int clientEntries = 0;
         for (String section : new String[] {"gameplay", "diagnostics", "client", "syncing"}) {
             for (java.util.Map.Entry<String, JsonElement> e : root.getAsJsonObject(section).entrySet()) {
@@ -120,6 +123,14 @@ class ConfigDefaultsParityTest {
         try (InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
             return new JsonParser().parse(reader).getAsJsonObject();
         }
+    }
+
+    private static java.util.List<String> names(JsonObject entry) {
+        java.util.List<String> names = new java.util.ArrayList<String>();
+        for (JsonElement e : entry.getAsJsonArray("options")) {
+            names.add(e.getAsString());
+        }
+        return names;
     }
 
     private static JsonObject entry(JsonObject section, String key) {
