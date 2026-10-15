@@ -36,8 +36,11 @@ public final class HudRenderer {
     private static final int ICON = 16;
     private static final int BORDER_COLOR = 0xFFF0E68C;
     private static final int TEXT_COLOR = 0xFFFFFFFF;
-    /** Shown instead of a time while the timers stand still (rate 0: spectator, depletion rate 0). */
-    static final String PAUSED_MARK = "||";
+    /**
+     * Shown instead of a time while the timers stand still (rate 0: spectator, depletion rate 0).
+     * Two capital i letters: the font draws the bar character with a gap, which reads as four bars.
+     */
+    static final String PAUSED_MARK = "II";
 
     @SubscribeEvent
     public void onPostRender(RenderGameOverlayEvent.Post event) {
