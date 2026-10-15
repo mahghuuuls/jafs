@@ -28,12 +28,12 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * {@code /jafs inspect [player] | reload}: operator tools. Every reply is also written to the
+ * {@code /jafs inspect [player] | reload | clear <player> | report}: operator tools. Every reply is also written to the
  * server log so it can be read after a test.
  */
 public final class JafsCommand extends CommandBase {
 
-    private static final String USAGE = "/jafs inspect [player] | reload | clear <player>";
+    private static final String USAGE = "/jafs inspect [player] | reload | clear <player> | report";
 
     @Override
     public String getName() {
@@ -54,7 +54,7 @@ public final class JafsCommand extends CommandBase {
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args,
             @Nullable BlockPos targetPos) {
         if (args.length == 1) {
-            return getListOfStringsMatchingLastWord(args, "inspect", "reload", "clear");
+            return getListOfStringsMatchingLastWord(args, "inspect", "reload", "clear", "report");
         }
         if (args.length == 2 && ("inspect".equalsIgnoreCase(args[0]) || "clear".equalsIgnoreCase(args[0]))) {
             return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
@@ -83,6 +83,16 @@ public final class JafsCommand extends CommandBase {
         } else if ("reload".equals(sub)) {
             for (String line : ReloadService.reloadAll().lines) {
                 reply(sender, line);
+            }
+        } else if ("report".equals(sub)) {
+            // The pack-maker report (REQ-069b): never touches player state; a write failure is reported, not hidden.
+            try {
+                FoodReportWriter.Result result = FoodReportWriter.write();
+                reply(sender, "JAFS report written to " + result.file.getPath() + ": listed " + result.counts.listed + ", configured "
+                        + result.counts.configured + ", unconfigured " + result.counts.unconfigured
+                        + (result.skipped.isEmpty() ? "" : "; skipped " + result.skipped.size() + " item(s): " + String.join(", ", result.skipped)));
+            } catch (java.io.IOException e) {
+                reply(sender, "JAFS report not written: " + e);
             }
         } else {
             throw new WrongUsageException(USAGE);

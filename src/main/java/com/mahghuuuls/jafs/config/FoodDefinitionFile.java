@@ -103,6 +103,11 @@ public final class FoodDefinitionFile {
         examplesFile = new File(folder, "foods-examples.json");
     }
 
+    /** The mod's configuration folder ({@code config/jafs}); null before {@link #setLocation}. */
+    public static File folder() {
+        return file == null ? null : file.getParentFile();
+    }
+
     public static DefinitionSet current() {
         return current;
     }

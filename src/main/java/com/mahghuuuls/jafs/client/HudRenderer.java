@@ -59,11 +59,13 @@ public final class HudRenderer {
             return;
         }
         Minecraft mc = Minecraft.getMinecraft();
-        float scale = ClientPreferences.hudScale();
-        int rowWidth = entries.size() * SLOT_WIDTH;
+        ClientPreferenceRules.Parsed prefs = ClientPreferences.current();
+        float scale = prefs.scale;
+        // The drawn width: every slot but the last takes its full pitch; the last is its icon.
+        int rowWidth = (entries.size() - 1) * SLOT_WIDTH + ICON;
         int rowHeight = ICON + 2 + mc.fontRenderer.FONT_HEIGHT;
-        int x = ClientPreferences.hudX(width, rowWidth, scale);
-        int y = ClientPreferences.hudY(height, rowHeight, scale, GuiIngameForge.left_height);
+        int x = ClientPreferences.hudX(prefs, width, rowWidth);
+        int y = ClientPreferences.hudY(prefs, height, rowHeight, GuiIngameForge.left_height);
 
         GlStateManager.pushMatrix();
         GlStateManager.translate(x, y, 0);

@@ -12,12 +12,12 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextComponentString;
 
 /**
- * {@code /jafsfixture pay <seconds> | canpay <seconds> | rate <depletionPercent> [recoveryPercent] | rate clear | foods | value <propertyId>}.
+ * {@code /jafsfixture pay <seconds> | canpay <seconds> | rate <depletionPercent> [recoveryPercent] | rate clear | foods | value <propertyId> | hud cancel|restore}.
  * Every reply is also logged so the agent can read it.
  */
 public final class FixtureCommand extends CommandBase {
 
-    private static final String USAGE = "/jafsfixture pay <seconds> | canpay <seconds> | rate <depletionPercent> [recoveryPercent] | rate clear | foods | value <propertyId>";
+    private static final String USAGE = "/jafsfixture pay <seconds> | canpay <seconds> | rate <depletionPercent> [recoveryPercent] | rate clear | foods | value <propertyId> | hud cancel|restore";
 
     @Override
     public String getName() {
@@ -62,6 +62,10 @@ public final class FixtureCommand extends CommandBase {
                 text.append(' ').append(food).append(' ').append(food.modifiers()).append(';');
             }
             reply(sender, text.toString());
+        } else if ("hud".equals(sub) && args.length == 2 && ("cancel".equals(args[1]) || "restore".equals(args[1]))) {
+            // Single-player only: the flag lives in this JVM, which is also the client's.
+            JafsFixtureMod.cancelHud = "cancel".equals(args[1]);
+            reply(sender, "jafsfixture hud: " + (JafsFixtureMod.cancelHud ? "cancelling the JAFS HUD event" : "JAFS HUD restored"));
         } else if ("value".equals(sub) && args.length == 2) {
             reply(sender, "jafsfixture value " + args[1] + ": " + JafsApi.getFoodService().getPropertyValue(player, args[1]));
         } else {

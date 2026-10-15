@@ -6,6 +6,8 @@ import com.mahghuuuls.jafs.api.JafsApi;
 import com.mahghuuuls.jafs.api.PropertyOperation;
 import com.mahghuuuls.jafs.api.PropertySpec;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
@@ -26,6 +28,8 @@ public final class JafsFixtureMod {
     /** The contribution the rate command sets; applies to every player. */
     static volatile double depletionPercent;
     static volatile double recoveryPercent;
+    /** When set, the fixture cancels the JAFS HUD event so the built-in HUD does not draw (IMP-012 card). */
+    static volatile boolean cancelHud;
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
@@ -51,6 +55,10 @@ public final class JafsFixtureMod {
             }
         });
         LOGGER.info("JAFS fixture registered {} and its rate provider (api {})", STAMINA, JafsApi.API_VERSION);
+        if (FMLCommonHandler.instance().getSide().isClient()) {
+            // The class is loaded only here, so a dedicated server never sees the client event type.
+            MinecraftForge.EVENT_BUS.register(new FixtureHudCanceller());
+        }
     }
 
     @Mod.EventHandler

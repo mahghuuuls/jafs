@@ -61,6 +61,46 @@ class ConfigDefaultsParityTest {
     }
 
     @Test
+    void clientKeysMatchTheAuthorityFile() throws Exception {
+        JsonObject client = load().getAsJsonObject("client");
+        assertEquals(entry(client, "hudAnchor").get("default").getAsString(), com.mahghuuuls.jafs.client.ClientDefaults.HUD_ANCHOR);
+        for (String key : new String[] {"hudOffsetX", "hudOffsetY"}) {
+            JsonObject e = entry(client, key);
+            assertEquals(e.get("default").getAsInt(), "hudOffsetX".equals(key)
+                    ? com.mahghuuuls.jafs.client.ClientDefaults.HUD_OFFSET_X : com.mahghuuuls.jafs.client.ClientDefaults.HUD_OFFSET_Y, key + " default");
+            assertEquals(e.get("min").getAsInt(), com.mahghuuuls.jafs.client.ClientDefaults.HUD_OFFSET_MIN, key + " min");
+            assertEquals(e.get("max").getAsInt(), com.mahghuuuls.jafs.client.ClientDefaults.HUD_OFFSET_MAX, key + " max");
+        }
+        JsonObject scale = entry(client, "hudScale");
+        assertEquals(scale.get("default").getAsDouble(), com.mahghuuuls.jafs.client.ClientDefaults.HUD_SCALE, 1e-9);
+        assertEquals(scale.get("min").getAsDouble(), com.mahghuuuls.jafs.client.ClientDefaults.HUD_SCALE_MIN, 1e-9);
+        assertEquals(scale.get("max").getAsDouble(), com.mahghuuuls.jafs.client.ClientDefaults.HUD_SCALE_MAX, 1e-9);
+        assertEquals(entry(client, "showUnconfiguredTooltip").get("default").getAsBoolean(),
+                com.mahghuuuls.jafs.client.ClientDefaults.SHOW_UNCONFIGURED_TOOLTIP);
+        assertEquals(0, entry(client, "propertyColorOverrides").get("default").getAsJsonObject().size(), "no default overrides");
+        assertEquals(0, com.mahghuuuls.jafs.client.ClientDefaults.PROPERTY_COLOR_OVERRIDES.length);
+    }
+
+    @Test
+    void everyClientScopeEntryInTheAuthorityFileHasADefault() throws Exception {
+        JsonObject root = load();
+        java.util.Set<String> known = new java.util.HashSet<String>(java.util.Arrays.asList(
+                "hudAnchor", "hudOffsetX", "hudOffsetY", "hudScale", "showUnconfiguredTooltip", "propertyColorOverrides"));
+        int clientEntries = 0;
+        for (String section : new String[] {"gameplay", "diagnostics", "client", "syncing"}) {
+            for (java.util.Map.Entry<String, JsonElement> e : root.getAsJsonObject(section).entrySet()) {
+                JsonObject entry = e.getValue().getAsJsonObject();
+                if (!"client".equals(entry.get("scope").getAsString())) {
+                    continue;
+                }
+                clientEntries++;
+                assertTrue(known.contains(e.getKey()), "config-defaults.json client entry " + e.getKey() + " has no ClientDefaults entry");
+            }
+        }
+        assertEquals(known.size(), clientEntries, "ClientDefaults and the client-scope entries differ in count");
+    }
+
+    @Test
     void definitionDurationRangeMatchesTheAuthorityFile() throws Exception {
         JsonObject entry = load().getAsJsonObject("gameplay").getAsJsonObject("fullDuration");
         assertEquals(entry.get("min").getAsInt(), com.mahghuuuls.jafs.core.DefinitionValidator.MIN_DURATION_SECONDS);
