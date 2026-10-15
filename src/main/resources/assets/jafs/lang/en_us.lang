@@ -7,6 +7,5 @@ tooltip.jafs.duration=Duration: %s
 
 message.jafs.ineligible=You can't eat more %s yet.
 message.jafs.no_slot=No food slot available
-message.jafs.nothing_to_clear=Nothing to clear
 
 item.jafs.bitter_berries.name=Bitter Berries

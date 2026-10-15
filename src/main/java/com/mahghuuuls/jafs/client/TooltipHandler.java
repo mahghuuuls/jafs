@@ -27,6 +27,8 @@ import java.util.List;
 @SideOnly(Side.CLIENT)
 public final class TooltipHandler {
 
+    private static final java.util.Set<String> WARNED_KEYS = new java.util.HashSet<String>();
+
     private static final String NO_BONUSES_KEY = "tooltip.jafs.unconfigured";
     private static final String DURATION_KEY = "tooltip.jafs.duration";
 
@@ -73,6 +75,9 @@ public final class TooltipHandler {
             return null;
         }
         String name = I18n.format(spec.displayNameKey());
+        if (!I18n.hasKey(spec.displayNameKey()) && WARNED_KEYS.add(spec.displayNameKey())) {
+            com.mahghuuuls.jafs.diagnostic.Diag.LOGGER.warn("no translation for property name key {} ({}) in the loaded language", spec.displayNameKey(), spec.id());
+        }
         String color = ClientPreferences.colorFor(modifier.propertyId(), spec.color());
         TextFormatting formatting = TextFormatting.getValueByName(color);
         String prefix = formatting == null ? "" : formatting.toString();

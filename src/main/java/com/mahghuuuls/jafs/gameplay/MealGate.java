@@ -26,7 +26,6 @@ public final class MealGate {
 
     public static final String MESSAGE_INELIGIBLE = "message.jafs.ineligible";
     public static final String MESSAGE_NO_SLOT = "message.jafs.no_slot";
-    public static final String MESSAGE_NOTHING_TO_CLEAR = "message.jafs.nothing_to_clear";
     /** The pending marker for a Bitter Berries use. A definition could carry this id in theory; the two paths then fail closed (nothing activates, nothing clears), and a player uses one hand at a time. */
     private static final String CLEAR_PENDING = "<clear>";
 
@@ -81,28 +80,27 @@ public final class MealGate {
     }
 
     /**
-     * Bitter Berries about to be eaten (REQ-054, REQ-055): refused when no food is active, so
-     * nothing is consumed; otherwise accepted outside the slot rules.
+     * Bitter Berries about to be eaten (REQ-054, REQ-055 as revised by REV-008): always accepted,
+     * outside the slot rules; with nothing active the item is simply consumed.
      */
     public Decision beginClear(EntityPlayerMP player) {
         pending.cancel(player.getUniqueID());
         IFoodState state = FoodStateCapability.get(player);
-        if (state == null || state.slots().isEmpty()) {
-            Diag.event("clear refused for {}: nothing to clear", player.getName());
-            return new Decision(false, new TextComponentTranslation(MESSAGE_NOTHING_TO_CLEAR));
-        }
         pending.begin(player.getUniqueID(), CLEAR_PENDING);
-        Diag.event("clear accepted for {}: {} foods active", player.getName(), state.slots().size());
+        Diag.event("clear accepted for {}: {} foods active", player.getName(), state == null ? 0 : state.slots().size());
         return Decision.ACCEPTED;
     }
 
-    /** Bitter Berries eaten: every active food goes, with the cap and no refund. */
+    /** Bitter Berries eaten: every active food goes, with the cap and no refund; nothing active, nothing happens. */
     public void finishClear(EntityPlayerMP player) {
         String expected = pending.take(player.getUniqueID());
         if (!CLEAR_PENDING.equals(expected)) {
             return;
         }
-        service.clearAll(player, "bitter berries");
+        int cleared = service.clearAll(player, "bitter berries");
+        if (cleared == 0) {
+            Diag.event("bitter berries eaten by {} with nothing to clear", player.getName());
+        }
     }
 
     /** Applies the meal after vanilla consumed the item, re-deciding against the current state. */

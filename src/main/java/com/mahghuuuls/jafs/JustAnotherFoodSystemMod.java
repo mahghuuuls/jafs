@@ -10,6 +10,7 @@ import com.mahghuuuls.jafs.gameplay.hooks.CakeHook;
 import com.mahghuuuls.jafs.gameplay.hooks.DamageHook;
 import com.mahghuuuls.jafs.gameplay.hooks.ItemUseHook;
 import com.mahghuuuls.jafs.gameplay.hooks.TickHook;
+import com.mahghuuuls.jafs.item.BitterBerryDropHook;
 import com.mahghuuuls.jafs.item.JafsItems;
 import com.mahghuuuls.jafs.network.JafsNetwork;
 import com.mahghuuuls.jafs.property.PropertyRegistry;
@@ -37,6 +38,7 @@ public class JustAnotherFoodSystemMod {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(new JafsItems());
+        MinecraftForge.EVENT_BUS.register(new BitterBerryDropHook());
         GameplayConfig.load(event.getModConfigurationDirectory());
         FoodDefinitionFile.setLocation(event.getModConfigurationDirectory());
         PropertyRegistry.registerCoreProperties();
