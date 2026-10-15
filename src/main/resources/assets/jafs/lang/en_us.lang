@@ -4,8 +4,10 @@ property.jafs.depletion_rate=Food Depletion Rate
 
 tooltip.jafs.unconfigured=No food bonuses configured
 tooltip.jafs.duration=Duration: %s
+tooltip.jafs.bitter_berries=Clears every active food
 
 message.jafs.ineligible=You can't eat more %s yet.
+message.jafs.ineligible_drink=You can't drink more %s yet.
 message.jafs.no_slot=No food slot available
 
 item.jafs.bitter_berries.name=Bitter Berries

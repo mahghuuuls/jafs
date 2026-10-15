@@ -1,5 +1,6 @@
 package com.mahghuuuls.jafs.client;
 
+import com.mahghuuuls.jafs.core.FoodDefinition;
 import com.mahghuuuls.jafs.core.FoodTimers;
 import com.mahghuuuls.jafs.diagnostic.Diag;
 import com.mahghuuuls.jafs.network.FoodStateSnapshotMessage;
@@ -23,8 +24,30 @@ public final class ClientFoodState implements JafsNetwork.SnapshotSink {
     private static volatile double rate = 1.0;
     private static volatile long receivedAtMillis;
 
+    /** The largest value {@link #realTicksLeft} returns; leaves room for the rounding in the display format. */
+    static final int MAX_DISPLAY_TICKS = Integer.MAX_VALUE - FoodDefinition.TICKS_PER_SECOND;
+
     public static List<FoodStateSnapshotMessage.Entry> entries() {
         return entries;
+    }
+
+    /** The rate the timers run at, from the last snapshot (0 while paused). */
+    public static double rate() {
+        return rate;
+    }
+
+    /**
+     * The real seconds until the entry expires at the current rate, in ticks: the remaining fuel
+     * divided by the rate (REV-009); -1 while the rate is 0 (paused). Capped so that
+     * {@code DisplayFormat.durationTicks}, which adds a second minus one tick, cannot overflow.
+     */
+    public static int realTicksLeft(FoodStateSnapshotMessage.Entry entry) {
+        double r = rate;
+        if (r <= 0) {
+            return -1;
+        }
+        long ticks = Math.round(remainingNow(entry) / r);
+        return ticks > MAX_DISPLAY_TICKS ? MAX_DISPLAY_TICKS : (int) ticks;
     }
 
     /** Remaining ticks of an entry now, counted down locally since the snapshot arrived. */

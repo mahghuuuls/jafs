@@ -7,6 +7,7 @@ import com.mahghuuuls.jafs.core.DisplayFormat;
 import com.mahghuuuls.jafs.core.FoodDefinition;
 import com.mahghuuuls.jafs.core.Modifier;
 import com.mahghuuuls.jafs.network.ItemKeys;
+import com.mahghuuuls.jafs.item.JafsItems;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.EnumAction;
 import net.minecraft.item.ItemFood;
@@ -30,6 +31,7 @@ public final class TooltipHandler {
     private static final java.util.Set<String> WARNED_KEYS = new java.util.HashSet<String>();
 
     private static final String NO_BONUSES_KEY = "tooltip.jafs.unconfigured";
+    static final String BITTER_BERRIES_KEY = "tooltip.jafs.bitter_berries";
     private static final String DURATION_KEY = "tooltip.jafs.duration";
 
     @SubscribeEvent
@@ -46,8 +48,13 @@ public final class TooltipHandler {
         DefinitionSet.Resolution resolution = set.resolve(key);
         List<String> lines = event.getToolTip();
         FoodDefinition definition = resolution.definition();
+        boolean bitterBerries = JafsItems.isBitterBerries(stack);
+        if (bitterBerries) {
+            // The clearing item says what it does (REV-008); it never gets the unconfigured line.
+            lines.add(TextFormatting.GRAY + I18n.format(BITTER_BERRIES_KEY));
+        }
         if (definition == null || !definition.hasModifiers()) {
-            if (isEdible(stack) && ClientPreferences.showUnconfiguredTooltip()) {
+            if (!bitterBerries && isEdible(stack) && ClientPreferences.showUnconfiguredTooltip()) {
                 lines.add(TextFormatting.DARK_GRAY + I18n.format(NO_BONUSES_KEY));
             }
             return;

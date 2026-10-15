@@ -40,7 +40,8 @@ public final class ItemUseHook {
             if (key == null) {
                 return;
             }
-            decision = gate.begin(player, key, new TextComponentString(event.getItem().getDisplayName()));
+            decision = gate.begin(player, key, new TextComponentString(event.getItem().getDisplayName()),
+                    event.getItem().getItemUseAction() == net.minecraft.item.EnumAction.DRINK);
         }
         if (!decision.accepted) {
             event.setCanceled(true);

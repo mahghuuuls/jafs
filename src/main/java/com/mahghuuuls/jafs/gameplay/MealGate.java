@@ -25,6 +25,7 @@ import java.util.UUID;
 public final class MealGate {
 
     public static final String MESSAGE_INELIGIBLE = "message.jafs.ineligible";
+    public static final String MESSAGE_INELIGIBLE_DRINK = "message.jafs.ineligible_drink";
     public static final String MESSAGE_NO_SLOT = "message.jafs.no_slot";
     /** The pending marker for a Bitter Berries use. A definition could carry this id in theory; the two paths then fail closed (nothing activates, nothing clears), and a player uses one hand at a time. */
     private static final String CLEAR_PENDING = "<clear>";
@@ -55,6 +56,11 @@ public final class MealGate {
      * for the refusal message.
      */
     public Decision begin(EntityPlayerMP player, ConsumableKey key, ITextComponent foodName) {
+        return begin(player, key, foodName, false);
+    }
+
+    /** As {@link #begin(EntityPlayerMP, ConsumableKey, ITextComponent)}; {@code drink} picks the verb of the refusal message (REV-009). */
+    public Decision begin(EntityPlayerMP player, ConsumableKey key, ITextComponent foodName, boolean drink) {
         pending.cancel(player.getUniqueID());
         FoodDefinition definition = resolve(player, key);
         if (definition == null) {
@@ -70,7 +76,7 @@ public final class MealGate {
         if (!outcome.accepted()) {
             Diag.event("meal refused {} for {}: {}", definition.id(), player.getName(), outcome.kind());
             ITextComponent message = outcome.kind() == MealRules.Kind.REFUSE_INELIGIBLE
-                    ? new TextComponentTranslation(MESSAGE_INELIGIBLE, foodName)
+                    ? new TextComponentTranslation(drink ? MESSAGE_INELIGIBLE_DRINK : MESSAGE_INELIGIBLE, foodName)
                     : new TextComponentTranslation(MESSAGE_NO_SLOT);
             return new Decision(false, message);
         }

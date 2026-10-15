@@ -5,11 +5,13 @@ import com.mahghuuuls.jafs.core.DisplayFormat;
 import com.mahghuuuls.jafs.core.FoodDefinition;
 import com.mahghuuuls.jafs.core.Matcher;
 import com.mahghuuuls.jafs.network.FoodStateSnapshotMessage;
+import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
@@ -34,6 +36,8 @@ public final class HudRenderer {
     private static final int ICON = 16;
     private static final int BORDER_COLOR = 0xFFF0E68C;
     private static final int TEXT_COLOR = 0xFFFFFFFF;
+    /** Shown instead of a time while the timers stand still (rate 0: spectator, depletion rate 0). */
+    static final String PAUSED_MARK = "||";
 
     @SubscribeEvent
     public void onPostRender(RenderGameOverlayEvent.Post event) {
@@ -73,7 +77,9 @@ public final class HudRenderer {
             if (!icon.isEmpty()) {
                 mc.getRenderItem().renderItemAndEffectIntoGUI(icon, slotX, 0);
             }
-            String time = DisplayFormat.durationTicks(ClientFoodState.remainingNow(entry));
+            // Real time left at the current rate (REV-009): a half-speed food shows twice its fuel; paused shows a mark.
+            int realTicks = ClientFoodState.realTicksLeft(entry);
+            String time = realTicks < 0 ? PAUSED_MARK : DisplayFormat.durationTicks(realTicks);
             GlStateManager.disableLighting();
             GlStateManager.disableDepth();
             mc.fontRenderer.drawStringWithShadow(time, slotX, ICON + 2, TEXT_COLOR);
@@ -83,19 +89,32 @@ public final class HudRenderer {
         GlStateManager.popMatrix();
     }
 
-    /** The first item matcher's item, as the slot's icon; an empty stack when none is known. */
+    /**
+     * The first matcher's item as the slot's icon: an item matcher's item, or a block matcher's
+     * block as its item (a cake draws the cake item); an empty stack when none is known.
+     */
     static ItemStack iconFor(String definitionId) {
         FoodDefinition definition = ClientDefinitions.definitions().get(definitionId);
         if (definition == null) {
             return ItemStack.EMPTY;
         }
         for (Matcher matcher : definition.matchers()) {
-            if (matcher.kind() != Matcher.Kind.ITEM) {
-                continue;
+            Item item;
+            if (matcher.kind() == Matcher.Kind.ITEM) {
+                item = Item.REGISTRY.getObject(new ResourceLocation(matcher.id()));
+            } else {
+                // Some blocks (cake, among others) have an item registered under the block's own id
+                // that getItemFromBlock does not know, so the item registry is asked first.
+                ResourceLocation id = new ResourceLocation(matcher.id());
+                item = Item.REGISTRY.getObject(id);
+                if (item == null) {
+                    Block block = Block.REGISTRY.getObject(id);
+                    item = block == null ? null : Item.getItemFromBlock(block);
+                }
             }
-            Item item = Item.REGISTRY.getObject(new ResourceLocation(matcher.id()));
-            if (item != null) {
-                return new ItemStack(item, 1, matcher.meta() == Matcher.ANY_META ? 0 : matcher.meta());
+            if (item != null && item != Items.AIR) {
+                int meta = matcher.kind() == Matcher.Kind.ITEM && matcher.meta() != Matcher.ANY_META ? matcher.meta() : 0;
+                return new ItemStack(item, 1, meta);
             }
         }
         return ItemStack.EMPTY;

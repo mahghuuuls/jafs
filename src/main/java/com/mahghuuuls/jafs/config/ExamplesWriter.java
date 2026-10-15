@@ -52,7 +52,7 @@ public final class ExamplesWriter {
                 + "    ]\n"
                 + "  },\n"
                 + "  {\n"
-                + "    \"_about\": \"A potion matched by its NBT: only Strength potions match. The nbt object lists field names and the exact values they must have. Numbers are compared by value: write 1 for a byte flag such as Unbreakable, 3 for a short or an int, 2.5 for a float. For a metadata variant use \\\"meta\\\": 1 next to the item.\",\n"
+                + "    \"_about\": \"A potion matched by its NBT, shown only because potions are the usual item with NBT; potions and other drinks are never foods unless a definition like this one names them. Only Strength potions match here. The nbt object lists field names and the exact values they must have. Numbers are compared by value: write 1 for a byte flag such as Unbreakable, 3 for a short or an int, 2.5 for a float. For a metadata variant use \\\"meta\\\": 1 next to the item.\",\n"
                 + "    \"id\": \"example_strength_potion\",\n"
                 + "    \"match\": [ { \"item\": \"minecraft:potion\", \"nbt\": { \"Potion\": \"minecraft:strength\" } } ],\n"
                 + "    \"fullDuration\": 300,\n"
