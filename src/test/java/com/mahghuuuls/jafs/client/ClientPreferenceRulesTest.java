@@ -27,7 +27,7 @@ class ClientPreferenceRulesTest {
                 ClientDefaults.HUD_OFFSET_Y, ClientDefaults.HUD_SCALE, ClientDefaults.SHOW_UNCONFIGURED_TOOLTIP,
                 ClientDefaults.PROPERTY_COLOR_OVERRIDES, NAMES);
         assertTrue(p.problems.isEmpty(), p.problems.toString());
-        assertEquals(HudLayout.Anchor.ABOVE_HOTBAR_LEFT, p.anchor);
+        assertEquals(HudLayout.Anchor.BOTTOM_LEFT, p.anchor);
         assertEquals(1.0f, p.scale);
         assertTrue(p.showUnconfiguredTooltip);
         assertTrue(p.colorOverrides.isEmpty());
@@ -51,11 +51,11 @@ class ClientPreferenceRulesTest {
     @Test
     void unknownAnchorFallsBackToTheDefaultAndSaysSo() {
         ClientPreferenceRules.Parsed p = ClientPreferenceRules.parse("middle", "sideways", 0, 0, 1.0, true, null, NAMES);
-        assertEquals(HudLayout.Anchor.ABOVE_HOTBAR_LEFT, p.anchor);
+        assertEquals(HudLayout.Anchor.BOTTOM_LEFT, p.anchor);
         assertEquals(HudLayout.Growth.LEFT_TO_RIGHT, p.growth);
         assertEquals(2, p.problems.size());
         assertTrue(p.problems.get(0).contains("hudAnchor 'middle'"));
-        assertTrue(p.problems.get(0).contains("above-hotbar-left"));
+        assertTrue(p.problems.get(0).contains("bottom-left"));
         assertTrue(p.problems.get(1).contains("hudGrowth 'sideways'"));
     }
 

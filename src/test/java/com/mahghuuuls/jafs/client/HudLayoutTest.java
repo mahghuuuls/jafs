@@ -106,6 +106,6 @@ class HudLayoutTest {
         assertArrayEquals(new String[] {"above-hotbar-left", "above-hotbar-right", "top-left", "top-right", "middle-left", "middle-right",
                 "bottom-left", "bottom-right"}, HudLayout.Anchor.names());
         assertArrayEquals(new String[] {"left-to-right", "right-to-left", "top-to-bottom", "bottom-to-top"}, HudLayout.Growth.names());
-        assertEquals(ClientDefaults.HUD_ANCHOR, HudLayout.Anchor.ABOVE_HOTBAR_LEFT.name);
+        assertEquals(ClientDefaults.HUD_ANCHOR, HudLayout.Anchor.BOTTOM_LEFT.name);
     }
 }

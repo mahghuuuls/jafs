@@ -25,6 +25,7 @@ public final class ClientProxy extends CommonProxy {
         MinecraftForge.EVENT_BUS.register(new TooltipHandler());
         MinecraftForge.EVENT_BUS.register(new HudRenderer());
         MinecraftForge.EVENT_BUS.register(new ClientLifecycle());
+        MinecraftForge.EVENT_BUS.register(new ClientUseHook());
         JafsNetwork.setDefinitionsSink(new ClientDefinitions());
         JafsNetwork.setSnapshotSink(new ClientFoodState());
         ClientFoodApi.bind(new ClientFoodState.ApiSource());

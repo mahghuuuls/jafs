@@ -1,12 +1,14 @@
 package com.mahghuuuls.jafs.client;
 
 import com.mahghuuuls.jafs.core.FoodDefinition;
+import com.mahghuuuls.jafs.core.FoodSlot;
 import com.mahghuuuls.jafs.core.FoodTimers;
 import com.mahghuuuls.jafs.diagnostic.Diag;
 import com.mahghuuuls.jafs.network.FoodStateSnapshotMessage;
 import com.mahghuuuls.jafs.network.JafsNetwork;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -15,14 +17,18 @@ import java.util.List;
 
 /**
  * The client's view of its own active foods: the last snapshot plus a local countdown at the
- * snapshot's rate, so the HUD moves between server updates.
+ * snapshot's rate, so the HUD moves between server updates. The countdown's clock is the client
+ * world's tick count, which stands still while a single-player game is paused and keeps pace with
+ * the server otherwise (D-D4); wall-clock time would keep running through a pause.
  */
 @SideOnly(Side.CLIENT)
 public final class ClientFoodState implements JafsNetwork.SnapshotSink {
 
     private static volatile List<FoodStateSnapshotMessage.Entry> entries = Collections.emptyList();
     private static volatile double rate = 1.0;
-    private static volatile long receivedAtMillis;
+    private static volatile long receivedAtWorldTicks;
+    private static volatile int activeFoodLimit = 1;
+    private static volatile int eligibilityThresholdPercent;
 
     /** The largest value {@link #realTicksLeft} returns; leaves room for the rounding in the display format. */
     static final int MAX_DISPLAY_TICKS = Integer.MAX_VALUE - FoodDefinition.TICKS_PER_SECOND;
@@ -52,8 +58,31 @@ public final class ClientFoodState implements JafsNetwork.SnapshotSink {
 
     /** Remaining ticks of an entry now, counted down locally since the snapshot arrived. */
     public static int remainingNow(FoodStateSnapshotMessage.Entry entry) {
-        double elapsedTicks = (System.currentTimeMillis() - receivedAtMillis) / 50.0;
-        return FoodTimers.remainingAfter(entry.remainingTicks, elapsedTicks, rate);
+        return FoodTimers.remainingAfter(entry.remainingTicks, elapsedTicks(), rate);
+    }
+
+    /** Client-world ticks since the snapshot; never negative (a new world starts its count at 0). */
+    private static double elapsedTicks() {
+        return Math.max(0, worldTicks() - receivedAtWorldTicks);
+    }
+
+    /** The client world's tick count; 0 outside a world. */
+    private static long worldTicks() {
+        WorldClient world = Minecraft.getMinecraft().world;
+        return world == null ? 0 : world.getTotalWorldTime();
+    }
+
+    public static int activeFoodLimit() {
+        return activeFoodLimit;
+    }
+
+    public static int eligibilityThresholdPercent() {
+        return eligibilityThresholdPercent;
+    }
+
+    /** The active foods as the server's selection rule sees them, counted down to now (REQ-081a). */
+    public static List<FoodSlot> slotsNow() {
+        return MealPrediction.slotsAfter(entries, elapsedTicks(), rate);
     }
 
     @Override
@@ -63,7 +92,9 @@ public final class ClientFoodState implements JafsNetwork.SnapshotSink {
             public void run() {
                 entries = Collections.unmodifiableList(message.entries());
                 rate = message.effectiveRate();
-                receivedAtMillis = System.currentTimeMillis();
+                receivedAtWorldTicks = worldTicks();
+                activeFoodLimit = message.activeFoodLimit();
+                eligibilityThresholdPercent = message.eligibilityThresholdPercent();
                 preApplyLowerHealth(message.health());
                 Diag.event("client snapshot foods={} rate={}", entries.size(), rate);
             }

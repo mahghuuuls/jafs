@@ -6,7 +6,7 @@ package com.mahghuuuls.jafs.client;
  */
 public final class ClientDefaults {
 
-    public static final String HUD_ANCHOR = "above-hotbar-left";
+    public static final String HUD_ANCHOR = "bottom-left";
     public static final String HUD_GROWTH = "left-to-right";
     public static final int HUD_OFFSET_X = 0;
     public static final int HUD_OFFSET_Y = 0;

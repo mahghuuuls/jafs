@@ -1,6 +1,8 @@
 package com.mahghuuuls.jafs.gameplay;
 
 import com.mahghuuuls.jafs.config.FoodDefinitionFile;
+import com.mahghuuuls.jafs.config.GameplayConfig;
+import com.mahghuuuls.jafs.config.GameplaySettings;
 import com.mahghuuuls.jafs.core.FoodSlot;
 import com.mahghuuuls.jafs.network.FoodStateSnapshotMessage;
 import com.mahghuuuls.jafs.network.JafsNetwork;
@@ -66,8 +68,9 @@ public class SyncService {
             entries.add(new FoodStateSnapshotMessage.Entry(slot.definitionId(), slot.remainingTicks(), slot.fullTicks(),
                     ActiveFoodService.isEligible(slot)));
         }
+        GameplaySettings settings = GameplayConfig.current();
         JafsNetwork.sendSnapshot(player, new FoodStateSnapshotMessage(entries, effectiveRate, FoodDefinitionFile.current().revision(),
-                player.getHealth()));
+                player.getHealth(), settings.activeFoodLimit(), settings.eligibilityThresholdPercent()));
         Tracker tracker = tracker(player);
         tracker.dirty = false;
         tracker.ticksSinceSend = 0;

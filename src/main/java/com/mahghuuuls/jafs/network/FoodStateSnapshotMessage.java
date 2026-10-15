@@ -33,15 +33,20 @@ public final class FoodStateSnapshotMessage implements IMessage {
     private double effectiveRate = 1.0;
     private long definitionsRevision;
     private float health;
+    private int activeFoodLimit = 1;
+    private int eligibilityThresholdPercent;
 
     public FoodStateSnapshotMessage() {
     }
 
-    public FoodStateSnapshotMessage(List<Entry> entries, double effectiveRate, long definitionsRevision, float health) {
+    public FoodStateSnapshotMessage(List<Entry> entries, double effectiveRate, long definitionsRevision, float health,
+                                    int activeFoodLimit, int eligibilityThresholdPercent) {
         this.entries = entries;
         this.effectiveRate = effectiveRate;
         this.definitionsRevision = definitionsRevision;
         this.health = health;
+        this.activeFoodLimit = activeFoodLimit;
+        this.eligibilityThresholdPercent = eligibilityThresholdPercent;
     }
 
     public List<Entry> entries() {
@@ -61,11 +66,23 @@ public final class FoodStateSnapshotMessage implements IMessage {
         return health;
     }
 
+    /** The server's slot limit, so the client can predict a refusal (REQ-081a). */
+    public int activeFoodLimit() {
+        return activeFoodLimit;
+    }
+
+    /** The server's eligibility threshold, so the client can recompute eligibility as it counts down (REQ-081a). */
+    public int eligibilityThresholdPercent() {
+        return eligibilityThresholdPercent;
+    }
+
     @Override
     public void fromBytes(ByteBuf buf) {
         definitionsRevision = buf.readLong();
         effectiveRate = buf.readDouble();
         health = buf.readFloat();
+        activeFoodLimit = buf.readByte();
+        eligibilityThresholdPercent = buf.readByte();
         int count = buf.readByte();
         entries = new ArrayList<Entry>(count);
         for (int i = 0; i < count; i++) {
@@ -78,6 +95,9 @@ public final class FoodStateSnapshotMessage implements IMessage {
         buf.writeLong(definitionsRevision);
         buf.writeDouble(effectiveRate);
         buf.writeFloat(health);
+        // One byte each: the limit is 1..12 and the threshold 1..100 (SettingKeys ranges, enforced by the validator).
+        buf.writeByte(activeFoodLimit);
+        buf.writeByte(eligibilityThresholdPercent);
         buf.writeByte(entries.size());
         for (Entry entry : entries) {
             ByteBufUtils.writeUTF8String(buf, entry.definitionId);
