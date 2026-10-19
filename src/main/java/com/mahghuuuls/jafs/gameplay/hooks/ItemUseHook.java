@@ -8,15 +8,19 @@ import com.mahghuuuls.jafs.network.ItemKeys;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.play.server.SPacketEntityMetadata;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.EnumActionResult;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
- * Adapts item use to the meal gate. Start is cancelable and fires before anything is consumed
- * (the client is told to drop its hand, see below);
- * Finish fires after the item applied itself (hunger, effects, container), which is when the
- * food is activated. Tick is never cancelled: cancelling it finishes the item at once.
+ * Adapts item use to the meal gate. A refusal is decided at the right-click itself (D-D5): the
+ * click is cancelled with a pass result before vanilla's item path runs, so nothing starts, the
+ * inventory is not resent, and the client shows only the message. Start (a second line, for a
+ * use that reaches it some other way) is cancelable and fires before anything is consumed; Finish
+ * fires after the item applied itself (hunger, effects, container), which is when the food is
+ * activated. Tick is never cancelled: cancelling it finishes the item at once.
  */
 public final class ItemUseHook {
 
@@ -24,6 +28,30 @@ public final class ItemUseHook {
 
     public ItemUseHook(MealGate gate) {
         this.gate = gate;
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        if (event.getWorld().isRemote || !(event.getEntityPlayer() instanceof EntityPlayerMP)) {
+            return;
+        }
+        EntityPlayerMP player = (EntityPlayerMP) event.getEntityPlayer();
+        if (JafsItems.isBitterBerries(event.getItemStack())) {
+            return; // always accepted; the clear path runs from Start and Finish
+        }
+        ConsumableKey key = ItemKeys.of(event.getItemStack(), FoodDefinitionFile.current());
+        if (key == null) {
+            return;
+        }
+        MealGate.Decision decision = gate.preview(player, key, new TextComponentString(event.getItemStack().getDisplayName()),
+                event.getItemStack().getItemUseAction() == net.minecraft.item.EnumAction.DRINK);
+        if (!decision.accepted) {
+            event.setCanceled(true);
+            event.setCancellationResult(EnumActionResult.PASS);
+            player.sendStatusMessage(decision.message, true);
+            // A client whose own prediction accepted has set its hand active; the (unchanged) metadata resets it.
+            player.connection.sendPacket(new SPacketEntityMetadata(player.getEntityId(), player.getDataManager(), true));
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)

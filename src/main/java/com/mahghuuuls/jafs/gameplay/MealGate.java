@@ -34,14 +34,21 @@ public final class MealGate {
     public static final class Decision {
         public final boolean accepted;
         public final ITextComponent message;
+        /** The rule's outcome for an accepted meal; null for an accepted use without a definition and for refusals. */
+        public final MealRules.Outcome outcome;
 
-        private Decision(boolean accepted, ITextComponent message) {
+        private Decision(boolean accepted, ITextComponent message, MealRules.Outcome outcome) {
             this.accepted = accepted;
             this.message = message;
+            this.outcome = outcome;
+        }
+
+        static Decision accepted(MealRules.Outcome outcome) {
+            return new Decision(true, null, outcome);
         }
 
         /** Accepted, or not a configured food at all: vanilla proceeds. */
-        public static final Decision ACCEPTED = new Decision(true, null);
+        public static final Decision ACCEPTED = new Decision(true, null, null);
     }
 
     private final ActiveFoodService service;
@@ -66,6 +73,27 @@ public final class MealGate {
         if (definition == null) {
             return Decision.ACCEPTED;
         }
+        Decision decision = decide(player, definition, foodName, drink);
+        if (decision.accepted) {
+            pending.begin(player.getUniqueID(), definition.id());
+            Diag.event("meal accepted {} for {}: {}", definition.id(), player.getName(), decision.outcome);
+        }
+        return decision;
+    }
+
+    /**
+     * The decision for a click, before the item acts (D-D5): the same rule as {@link #begin}, with
+     * nothing remembered. A refusal here stops the click on the server before vanilla's item path
+     * runs, so the server never resends the inventory (which made the client re-equip the item
+     * with a visible hand motion) and the start event never fires for it. An accepted click
+     * continues into the item path and reaches {@link #begin} as before.
+     */
+    public Decision preview(EntityPlayerMP player, ConsumableKey key, ITextComponent foodName, boolean drink) {
+        FoodDefinition definition = resolve(player, key);
+        return definition == null ? Decision.ACCEPTED : decide(player, definition, foodName, drink);
+    }
+
+    private static Decision decide(EntityPlayerMP player, FoodDefinition definition, ITextComponent foodName, boolean drink) {
         IFoodState state = FoodStateCapability.get(player);
         if (state == null) {
             return Decision.ACCEPTED;
@@ -78,11 +106,10 @@ public final class MealGate {
             ITextComponent message = outcome.kind() == MealRules.Kind.REFUSE_INELIGIBLE
                     ? new TextComponentTranslation(drink ? MESSAGE_INELIGIBLE_DRINK : MESSAGE_INELIGIBLE, foodName)
                     : new TextComponentTranslation(MESSAGE_NO_SLOT);
-            return new Decision(false, message);
+            return new Decision(false, message, null);
         }
-        pending.begin(player.getUniqueID(), definition.id());
-        Diag.event("meal accepted {} for {}: {}", definition.id(), player.getName(), outcome);
-        return Decision.ACCEPTED;
+        // Logged by begin, not here: an accepted click is previewed and then begun, and the line must appear once.
+        return Decision.accepted(outcome);
     }
 
     /**
