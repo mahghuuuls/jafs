@@ -7,7 +7,6 @@ import com.mahghuuuls.jafs.core.Matcher;
 import com.mahghuuuls.jafs.network.FoodStateSnapshotMessage;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
@@ -25,17 +24,16 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
 
 /**
- * Draws the active foods: one cell per slot, each an item icon with the time left under it, and
- * a steady border around a food that can be refreshed or replaced. The cells run in a row or a
- * column from the configured anchor (REQ-063, REV-012). Drawn after the whole vanilla overlay so
- * the health rows (whose height depends on maximum health) are known.
+ * Draws the active foods: one cell per slot, each an item icon with the time left under it in
+ * the color of {@link TimeColor} (white, yellow once the food can be eaten again, red in the last
+ * minute; REQ-064, REV-015). The cells run in a row or a column from the configured anchor
+ * (REQ-063, REV-012). Drawn after the whole vanilla overlay so the health rows (whose height
+ * depends on maximum health) are known.
  */
 @SideOnly(Side.CLIENT)
 public final class HudRenderer {
 
     private static final int ICON = 16;
-    private static final int BORDER_COLOR = 0xFFF0E68C;
-    private static final int TEXT_COLOR = 0xFFFFFFFF;
     /**
      * Shown instead of a time while the timers stand still (rate 0: spectator, depletion rate 0).
      * Two capital i letters: the font draws the bar character with a gap, which reads as four bars.
@@ -69,9 +67,13 @@ public final class HudRenderer {
         // not jump as times shorten), or a wider time when one occurs; the text never runs past the
         // block (REV-012).
         String[] times = new String[count];
+        int[] colors = new int[count];
         int cellWidth = Math.max(ICON, mc.fontRenderer.getStringWidth(WIDEST_USUAL_TIME));
         for (int i = 0; i < count; i++) {
-            times[i] = timeFor(entries.get(i));
+            FoodStateSnapshotMessage.Entry entry = entries.get(i);
+            int realTicks = ClientFoodState.realTicksLeft(entry);
+            times[i] = realTicks < 0 ? PAUSED_MARK : DisplayFormat.compactDurationTicks(realTicks);
+            colors[i] = TimeColor.of(entry.eligible, realTicks).argb;
             cellWidth = Math.max(cellWidth, mc.fontRenderer.getStringWidth(times[i]));
         }
         int cellHeight = ICON + 2 + mc.fontRenderer.FONT_HEIGHT;
@@ -89,31 +91,18 @@ public final class HudRenderer {
             int along = HudLayout.slotOffset(prefs.growth, i, count, prefs.growth.horizontal ? cellWidth : cellHeight);
             int cellX = prefs.growth.horizontal ? along : 0;
             int cellY = prefs.growth.horizontal ? 0 : along;
-            // The icon sits at the cell's left; the time under it, left-aligned with the icon.
+            // The icon sits at the cell's left; the time under it, left-aligned with the icon, in its color.
             ItemStack icon = iconFor(entry.definitionId);
-            if (entry.eligible) {
-                Gui.drawRect(cellX - 1, cellY - 1, cellX + ICON + 1, cellY + ICON + 1, BORDER_COLOR);
-                Gui.drawRect(cellX, cellY, cellX + ICON, cellY + ICON, 0xFF000000);
-            }
             if (!icon.isEmpty()) {
                 mc.getRenderItem().renderItemAndEffectIntoGUI(icon, cellX, cellY);
             }
             GlStateManager.disableLighting();
             GlStateManager.disableDepth();
-            mc.fontRenderer.drawStringWithShadow(times[i], cellX, cellY + ICON + 2, TEXT_COLOR);
+            mc.fontRenderer.drawStringWithShadow(times[i], cellX, cellY + ICON + 2, colors[i]);
             GlStateManager.enableDepth();
         }
         RenderHelper.disableStandardItemLighting();
         GlStateManager.popMatrix();
-    }
-
-    /**
-     * The time left at the current rate (REV-009), compact (REV-012): {@code 19m} while a minute or
-     * more is left, {@code 45s} under a minute, {@code 1h05} for an hour or more; a mark while paused.
-     */
-    static String timeFor(FoodStateSnapshotMessage.Entry entry) {
-        int realTicks = ClientFoodState.realTicksLeft(entry);
-        return realTicks < 0 ? PAUSED_MARK : DisplayFormat.compactDurationTicks(realTicks);
     }
 
     /**
