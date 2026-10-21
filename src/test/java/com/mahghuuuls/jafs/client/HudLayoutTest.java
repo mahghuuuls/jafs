@@ -99,6 +99,14 @@ class HudLayoutTest {
     }
 
     @Test
+    void contentIsCenteredInItsCell() {
+        assertEquals(4, HudLayout.centered(24, 16));
+        assertEquals(0, HudLayout.centered(24, 24));
+        assertEquals(3, HudLayout.centered(24, 18));
+        assertEquals(0, HudLayout.centered(16, 24));
+    }
+
+    @Test
     void anchorNamesParseIgnoringCaseAndSpaces() {
         assertEquals(HudLayout.Anchor.TOP_RIGHT, HudLayout.Anchor.parse(" Top-Right "));
         assertNull(HudLayout.Anchor.parse("middle"));

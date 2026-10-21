@@ -1,6 +1,7 @@
 package com.mahghuuuls.jafs.gameplay;
 
 import com.mahghuuuls.jafs.api.PaymentResult;
+import com.mahghuuuls.jafs.config.FoodDefinitionFile;
 import com.mahghuuuls.jafs.config.GameplayConfig;
 import com.mahghuuuls.jafs.core.FoodDefinition;
 import com.mahghuuuls.jafs.core.FoodSlot;
@@ -13,6 +14,7 @@ import com.mahghuuuls.jafs.diagnostic.Diag;
 import com.mahghuuuls.jafs.state.FoodStateCapability;
 import com.mahghuuuls.jafs.state.IFoodState;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.text.TextComponentTranslation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -98,12 +100,27 @@ public final class ActiveFoodService {
         for (FoodSlot slot : expired) {
             state.slots().remove(slot);
             Diag.event("expired {} for {}", slot.definitionId(), player.getName());
+            notifyExpiry(player, slot.definitionId());
         }
         changed(player, state, "expiration");
     }
 
+    /** Tells the player a food ran out on its own (not by a payment), naming it as the HUD does. */
+    private static void notifyExpiry(EntityPlayerMP player, String definitionId) {
+        FoodDefinition definition = FoodDefinitionFile.current().get(definitionId);
+        if (definition == null) {
+            return; // the definition vanished with a reload; nothing to name
+        }
+        net.minecraft.item.ItemStack stack = FoodNames.firstStack(definition);
+        String key = FoodNames.isDrink(stack) ? MESSAGE_EXPIRED_DRINK : MESSAGE_EXPIRED;
+        player.sendStatusMessage(new TextComponentTranslation(key, FoodNames.displayName(definition, stack)), true);
+    }
+
     /** The largest cost in seconds that fits the tick arithmetic; anything above is never affordable. */
     public static final int MAX_PAYMENT_SECONDS = Integer.MAX_VALUE / FoodDefinition.TICKS_PER_SECOND;
+    /** The notice keys for a food that ran out (REQ-068a): "You could eat more <name>." or "... drink more ...". */
+    public static final String MESSAGE_EXPIRED = "message.jafs.expired";
+    public static final String MESSAGE_EXPIRED_DRINK = "message.jafs.expired_drink";
 
     /** Whether a payment of the seconds would succeed now (REQ-048). */
     public boolean canPay(EntityPlayerMP player, int seconds) {

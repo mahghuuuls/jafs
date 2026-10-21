@@ -91,14 +91,15 @@ public final class HudRenderer {
             int along = HudLayout.slotOffset(prefs.growth, i, count, prefs.growth.horizontal ? cellWidth : cellHeight);
             int cellX = prefs.growth.horizontal ? along : 0;
             int cellY = prefs.growth.horizontal ? 0 : along;
-            // The icon sits at the cell's left; the time under it, left-aligned with the icon, in its color.
+            // The icon and the time are each centered in the cell, so the time sits under the icon's middle.
             ItemStack icon = iconFor(entry.definitionId);
             if (!icon.isEmpty()) {
-                mc.getRenderItem().renderItemAndEffectIntoGUI(icon, cellX, cellY);
+                mc.getRenderItem().renderItemAndEffectIntoGUI(icon, cellX + HudLayout.centered(cellWidth, ICON), cellY);
             }
             GlStateManager.disableLighting();
             GlStateManager.disableDepth();
-            mc.fontRenderer.drawStringWithShadow(times[i], cellX, cellY + ICON + 2, colors[i]);
+            int textX = cellX + HudLayout.centered(cellWidth, mc.fontRenderer.getStringWidth(times[i]));
+            mc.fontRenderer.drawStringWithShadow(times[i], textX, cellY + ICON + 2, colors[i]);
             GlStateManager.enableDepth();
         }
         RenderHelper.disableStandardItemLighting();

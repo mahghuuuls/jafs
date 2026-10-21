@@ -185,6 +185,11 @@ public final class HudLayout {
         return keepOnScreen(base + offsetY, screenHeight, scaledHeight);
     }
 
+    /** The left edge of content {@code contentWidth} wide centered in a cell {@code cellWidth} wide (never negative). */
+    public static int centered(int cellWidth, int contentWidth) {
+        return Math.max(0, (cellWidth - contentWidth) / 2);
+    }
+
     /** The position moved back inside the margins; the near edge wins when the block does not fit. */
     static int keepOnScreen(int position, int screenSize, int blockSize) {
         int max = screenSize - MARGIN - blockSize;
