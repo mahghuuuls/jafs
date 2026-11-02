@@ -13,9 +13,11 @@ import com.mahghuuuls.jafs.gameplay.hooks.TickHook;
 import com.mahghuuuls.jafs.item.BitterBerryDropHook;
 import com.mahghuuuls.jafs.item.JafsItems;
 import com.mahghuuuls.jafs.network.JafsNetwork;
+import com.mahghuuuls.jafs.property.AttributeProperties;
 import com.mahghuuuls.jafs.property.PropertyRegistry;
 import com.mahghuuuls.jafs.state.FoodStateCapability;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLLoadCompleteEvent;
@@ -29,7 +31,7 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
  */
 @Mod(modid = Tags.MOD_ID, name = Tags.MOD_NAME, version = Tags.VERSION,
         acceptedMinecraftVersions = "[1.12.2]",
-        dependencies = "required-after:forge@[14.23.5.2847,);after:inhibited")
+        dependencies = "required-after:forge@[14.23.5.2847,);after:inhibited;after:setworks")
 public class JustAnotherFoodSystemMod {
 
     @SidedProxy(clientSide = "com.mahghuuuls.jafs.client.ClientProxy", serverSide = "com.mahghuuuls.jafs.CommonProxy")
@@ -41,7 +43,12 @@ public class JustAnotherFoodSystemMod {
         MinecraftForge.EVENT_BUS.register(new BitterBerryDropHook());
         GameplayConfig.load(event.getModConfigurationDirectory());
         FoodDefinitionFile.setLocation(event.getModConfigurationDirectory());
-        PropertyRegistry.registerCoreProperties();
+        PropertyRegistry.registerCoreProperties(new AttributeProperties.ModPresence() {
+            @Override
+            public boolean isLoaded(String modId) {
+                return Loader.isModLoaded(modId);
+            }
+        });
         JafsNetwork.register();
         FoodStateCapability.register();
         MinecraftForge.EVENT_BUS.register(new FoodStateCapability.Attacher());

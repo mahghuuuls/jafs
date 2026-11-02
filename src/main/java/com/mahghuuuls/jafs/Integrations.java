@@ -2,6 +2,7 @@ package com.mahghuuuls.jafs;
 
 import com.mahghuuuls.jafs.compat.inhibited.InhibitedRecoveryGate;
 import com.mahghuuuls.jafs.compat.rht.RhtNotice;
+import com.mahghuuuls.jafs.compat.setworks.SetworksBridge;
 import com.mahghuuuls.jafs.diagnostic.Diag;
 import com.mahghuuuls.jafs.gameplay.JafsGameplay;
 import net.minecraft.potion.Potion;
@@ -30,6 +31,10 @@ public final class Integrations {
                 gameplay.recovery().setGate(new InhibitedRecoveryGate(effect));
                 Diag.LOGGER.info("Inhibited found: recovery is blocked while {} is active when inhibitedBlocksRecovery is on", InhibitedRecoveryGate.EFFECT_ID);
             }
+        }
+        if (Loader.isModLoaded(SetworksBridge.MOD_ID)) {
+            // The bridge class is loaded only here, so a game without Setworks never touches its API.
+            SetworksBridge.register();
         }
     }
 }

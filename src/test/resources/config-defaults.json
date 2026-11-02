@@ -28,5 +28,26 @@
   "syncing": {
     "timerCorrectionInterval": { "default": 5, "fixed": true, "unit": "seconds", "scope": "internal", "purpose": "How often the server corrects client-side countdowns when nothing else changed." },
     "clientTimerTolerance":   { "default": 1, "fixed": true, "unit": "seconds", "scope": "internal", "purpose": "Maximum allowed difference between the HUD countdown and the server value." }
+  },
+  "properties": {
+    "_comment":                  "CYCLE-001: operations and limits per JAFS property (REQ-056). flat and percent are [min, max]; a missing operation is unsupported. The three original properties keep their limits.",
+    "jafs:max_health":           {"flat": [-1000, 1000], "percent": [-100, 1000], "attribute": "generic.maxHealth"},
+    "jafs:recovery_rate":        {"percent": [-1000, 1000]},
+    "jafs:depletion_rate":       {"percent": [-1000, 1000]},
+    "jafs:movement_speed":       {"percent": [-90, 300], "attribute": "generic.movementSpeed"},
+    "jafs:attack_damage":        {"flat": [-20, 100], "percent": [-100, 1000], "attribute": "generic.attackDamage"},
+    "jafs:attack_speed":         {"flat": [-4, 100], "percent": [-90, 1000], "attribute": "generic.attackSpeed"},
+    "jafs:armor":                {"flat": [-30, 30], "percent": [-100, 1000], "attribute": "generic.armor"},
+    "jafs:armor_toughness":      {"flat": [-20, 20], "percent": [-100, 1000], "attribute": "generic.armorToughness"},
+    "jafs:knockback_resistance": {"flat": [-1, 1], "attribute": "generic.knockbackResistance"},
+    "jafs:luck":                 {"flat": [-100, 100], "attribute": "generic.luck"},
+    "jafs:block_reach":          {"flat": [-5, 100], "percent": [-100, 1000], "attribute": "generic.reachDistance"},
+    "jafs:jump_height":          {"flat": [-1, 10], "percent": [-100, 1000], "attribute": "potioncore.jumpHeight", "requiresMod": "potioncore"},
+    "jafs:dig_speed":            {"flat": [-1, 10], "percent": [-100, 1000], "attribute": "potioncore.digSpeed", "requiresMod": "potioncore"},
+    "jafs:projectile_damage":    {"flat": [-1, 10], "percent": [-100, 1000], "attribute": "potioncore.projectileDamage", "requiresMod": "potioncore"},
+    "jafs:magic_damage":         {"flat": [-1, 10], "percent": [-100, 1000], "attribute": "potioncore.magicDamage", "requiresMod": "potioncore"},
+    "jafs:damage_resistance":    {"flat": [-1, 0.9], "percent": [-100, 90], "attribute": "potioncore.damageResistance", "requiresMod": "potioncore"},
+    "jafs:magic_shielding":      {"flat": [0, 20], "attribute": "potioncore.magicShielding", "requiresMod": "potioncore"},
+    "jafs:step_height":          {"flat": [-0.6, 5], "percent": [-100, 1000], "attribute": "potioncore.stepHeight", "requiresMod": "potioncore"}
   }
 }

@@ -93,23 +93,6 @@ public final class MaxHealthApplier implements IPropertyApplier {
     }
 
     private static boolean put(IAttributeInstance attribute, UUID id, String name, int operation, double amount) {
-        AttributeModifier existing = attribute.getModifier(id);
-        if (amount == 0) {
-            if (existing == null) {
-                return false;
-            }
-            attribute.removeModifier(id);
-            return true;
-        }
-        if (existing != null) {
-            if (Double.compare(existing.getAmount(), amount) == 0) {
-                return false;
-            }
-            attribute.removeModifier(id);
-        }
-        AttributeModifier modifier = new AttributeModifier(id, name, amount, operation);
-        modifier.setSaved(true);
-        attribute.applyModifier(modifier);
-        return true;
+        return AttributeModifiers.put(attribute, id, name, operation, amount);
     }
 }

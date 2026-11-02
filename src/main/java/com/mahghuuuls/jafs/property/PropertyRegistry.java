@@ -35,12 +35,25 @@ public final class PropertyRegistry implements PropertyCatalog {
         return new PropertyRegistry();
     }
 
+    /** An empty registry for tests outside this package (a compat validating against a registry without the property). */
+    public static PropertyRegistry forTestsWithoutProperties() {
+        return new PropertyRegistry();
+    }
+
     public static PropertyRegistry get() {
         return INSTANCE;
     }
 
-    /** Registers JAFS's three properties. Called once in pre-init, before any addon can register. */
+    /** Registers JAFS's properties with no optional mod present (tests); the mod passes FML's answer. */
     public static void registerCoreProperties() {
+        registerCoreProperties(AttributeProperties.NONE);
+    }
+
+    /**
+     * Registers JAFS's properties: the three originals and the attribute-backed table rows whose
+     * required mod is absent-or-loaded (ARC-013). Called once in pre-init, before any addon can register.
+     */
+    public static void registerCoreProperties(AttributeProperties.ModPresence presence) {
         PropertyRegistry registry = get();
         registry.register(PropertySpec.builder(MAX_HEALTH)
                 .displayNameKey("property.jafs.max_health").unit("HP").color("red")
@@ -55,6 +68,7 @@ public final class PropertyRegistry implements PropertyCatalog {
                 .displayNameKey("property.jafs.depletion_rate").unit("").color("gold")
                 .operation(PropertyOperation.PERCENT, -1000, 1000)
                 .build(), registry.rates.depletionApplier());
+        AttributeProperties.registerAll(registry, presence);
     }
 
     /** The rate holders the two rate properties write into. */

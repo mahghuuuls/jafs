@@ -4,7 +4,10 @@ import com.mahghuuuls.jafs.api.IRateModifierProvider;
 import com.mahghuuuls.jafs.diagnostic.Diag;
 import net.minecraft.entity.player.EntityPlayerMP;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -43,6 +46,41 @@ public final class ExternalModifierBook {
             sum += read(entry.getKey(), entry.getValue(), player, true);
         }
         return sum;
+    }
+
+    /**
+     * One text per provider with a non-zero contribution, {@code id{recovery=+50% depletion=-30%}},
+     * followed by the provider's own parts when it is a {@link DescribableRateModifier}
+     * ({@code id{...; <part>; <part>}}); empty when no provider contributes.
+     */
+    public synchronized List<String> describe(EntityPlayerMP player) {
+        List<String> lines = new ArrayList<String>();
+        for (Map.Entry<String, IRateModifierProvider> entry : providers.entrySet()) {
+            double recovery = read(entry.getKey(), entry.getValue(), player, true);
+            double depletion = read(entry.getKey(), entry.getValue(), player, false);
+            if (recovery == 0 && depletion == 0) {
+                continue;
+            }
+            StringBuilder text = new StringBuilder(entry.getKey()).append("{recovery=").append(RateText.signedPercent(recovery))
+                    .append(" depletion=").append(RateText.signedPercent(depletion));
+            if (entry.getValue() instanceof DescribableRateModifier) {
+                for (String part : parts(entry.getKey(), (DescribableRateModifier) entry.getValue(), player)) {
+                    text.append("; ").append(part);
+                }
+            }
+            lines.add(text.append('}').toString());
+        }
+        return lines;
+    }
+
+    private List<String> parts(String id, DescribableRateModifier provider, EntityPlayerMP player) {
+        try {
+            List<String> parts = provider.describeContributions(player);
+            return parts == null ? Collections.<String>emptyList() : parts;
+        } catch (RuntimeException e) {
+            Diag.LOGGER.warn("rate modifier provider {} failed to describe itself for {}", id, player.getName(), e);
+            return Collections.<String>emptyList();
+        }
     }
 
     public synchronized double depletionPercent(EntityPlayerMP player) {

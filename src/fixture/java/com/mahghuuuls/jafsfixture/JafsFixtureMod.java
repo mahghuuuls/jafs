@@ -18,7 +18,7 @@ import org.apache.logging.log4j.Logger;
  * Development-only fixture addon: it compiles against the JAFS {@code api} package only and
  * proves the public contract (REQ-057, REQ-059, REQ-060). Never packaged with the mod.
  */
-@Mod(modid = JafsFixtureMod.MOD_ID, name = "JAFS Fixture", version = "0.0.0", dependencies = "required-after:jafs")
+@Mod(modid = JafsFixtureMod.MOD_ID, name = "JAFS Fixture", version = "0.0.0", dependencies = "required-after:jafs;after:setworks")
 public final class JafsFixtureMod {
 
     public static final String MOD_ID = "jafsfixture";
@@ -58,6 +58,10 @@ public final class JafsFixtureMod {
         if (FMLCommonHandler.instance().getSide().isClient()) {
             // The class is loaded only here, so a dedicated server never sees the client event type.
             MinecraftForge.EVENT_BUS.register(new FixtureHudCanceller());
+        }
+        if (net.minecraftforge.fml.common.Loader.isModLoaded("setworks")) {
+            // The class is loaded only here, so a game without Setworks never touches its API.
+            FixtureSetworksSet.register();
         }
     }
 

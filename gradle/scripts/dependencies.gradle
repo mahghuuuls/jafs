@@ -54,6 +54,26 @@ dependencies {
         runtimeOnly rfg.deobf(files('libs/Inhibited-1.2.0.jar'))
     }
 
+    // Potion Core, development runtime only for the optional attribute properties; never packaged or declared
+    // (JAFS finds its attributes by name at runtime and registers the properties only when the mod is loaded):
+    //   PotionCore-1.9_for_1.12.2.jar, 145329 bytes, sha256 0851c95e297efffc18539212b826e3b935e9fc189363d9e311df4bb6d62e27dd
+    if (file('libs/PotionCore-1.9_for_1.12.2.jar').exists()) {
+        runtimeOnly rfg.deobf(files('libs/PotionCore-1.9_for_1.12.2.jar'))
+    }
+
+    // Setworks, whose API the compat package compiles against; development only, never packaged or shipped
+    // (JAFS declares after:setworks and loads the compat class only when the mod is present):
+    //   setworks-1.0.0-dev.jar (the deobfuscated development jar of Setworks 1.0.0), 485227 bytes,
+    //   sha256 780212d6a5f7e69b4685f7c3ea294ac51a9bc7da521dd61a4fc0eaecb8b74dd2
+    // Unlike the two runtime-only jars above, this one is needed to compile: the build stops with a clear message without it.
+    if (!file('libs/setworks-1.0.0-dev.jar').exists()) {
+        throw new GradleException("libs/setworks-1.0.0-dev.jar is missing: copy the Setworks 1.0.0 development jar (build/libs of the Setworks project) into libs/; the compat package compiles against its API")
+    }
+    compileOnly rfg.deobf(files('libs/setworks-1.0.0-dev.jar'))
+    runtimeOnly rfg.deobf(files('libs/setworks-1.0.0-dev.jar'))
+    testCompileOnly rfg.deobf(files('libs/setworks-1.0.0-dev.jar'))
+    testRuntimeOnly rfg.deobf(files('libs/setworks-1.0.0-dev.jar'))
+
     // Example - Dependency descriptor:
     // 'com.google.code.gson:gson:2.8.6' << group: com.google.code.gson, name:gson, version:2.8.6
     // 'group:name:version:classifier' where classifier is optional

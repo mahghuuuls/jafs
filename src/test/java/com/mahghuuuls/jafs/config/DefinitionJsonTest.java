@@ -101,10 +101,22 @@ class DefinitionJsonTest {
     @Test
     void examplesFileParsesAndValidatesCleanly() {
         List<RawDefinition> raws = DefinitionJson.read(new StringReader(ExamplesWriter.content()));
-        assertEquals(6, raws.size());
+        assertEquals(8, raws.size());
         DefinitionValidator.Result result = DefinitionValidator.validate(raws, CATALOG);
-        assertEquals(6, result.definitions.size());
-        assertTrue(result.problems.isEmpty(), result.problems.toString());
+        assertEquals(8, result.definitions.size());
+        // The Potion Core example names properties that exist only with Potion Core: without it, exactly its two
+        // modifiers are reported as unknown properties and the definition keeps loading (REQ-056b, REQ-058).
+        assertEquals(2, result.problems.size(), result.problems.toString());
+        String[] skipped = {"jafs:jump_height", "jafs:damage_resistance"};
+        for (int i = 0; i < skipped.length; i++) {
+            com.mahghuuuls.jafs.core.Problem problem = result.problems.get(i);
+            assertEquals(com.mahghuuuls.jafs.core.Problem.Severity.WARNING, problem.severity(), problem.toString());
+            assertEquals("example_rabbit_leap", problem.definitionId(), problem.toString());
+            assertEquals("modifiers[" + i + "].property", problem.field(), problem.toString());
+            assertTrue(problem.message().contains("'" + skipped[i] + "'"), problem.toString());
+        }
         assertEquals(10, result.definitions.get(4).priority());
+        assertEquals("example_sprint_steak", result.definitions.get(5).id());
+        assertEquals(1, result.definitions.get(5).priority());
     }
 }

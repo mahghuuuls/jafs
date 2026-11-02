@@ -1,6 +1,21 @@
 property.jafs.max_health=Max Health
 property.jafs.recovery_rate=Recovery Rate
 property.jafs.depletion_rate=Food Depletion Rate
+property.jafs.movement_speed=Movement Speed
+property.jafs.attack_damage=Attack Damage
+property.jafs.attack_speed=Attack Speed
+property.jafs.armor=Armor
+property.jafs.armor_toughness=Armor Toughness
+property.jafs.knockback_resistance=Knockback Resistance
+property.jafs.luck=Luck
+property.jafs.block_reach=Block Reach
+property.jafs.jump_height=Jump Height
+property.jafs.dig_speed=Dig Speed
+property.jafs.projectile_damage=Projectile Damage
+property.jafs.magic_damage=Magic Damage
+property.jafs.damage_resistance=Damage Resistance
+property.jafs.magic_shielding=Magic Shielding
+property.jafs.step_height=Step Height
 
 tooltip.jafs.unconfigured=No food bonuses configured
 tooltip.jafs.duration=Duration: %s

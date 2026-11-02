@@ -36,7 +36,13 @@ class PropertyRegistryTest {
         assertTrue(!recovery.supports(PropertyOperation.FLAT));
         assertEquals(-1000, recovery.range(PropertyOperation.PERCENT).min(), 1e-9);
         assertTrue(registry.find(PropertyRegistry.DEPLETION_RATE).supports(PropertyOperation.PERCENT));
-        assertEquals(3, registry.all().size());
+        int unconditional = 0;
+        for (AttributeProperties.Row row : AttributeProperties.rows()) {
+            if (row.requiresMod() == null) {
+                unconditional++;
+            }
+        }
+        assertEquals(3 + unconditional, registry.all().size(), "the three originals plus the attribute-backed rows that need no mod");
     }
 
     @Test

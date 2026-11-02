@@ -120,6 +120,8 @@ public final class JafsCommand extends CommandBase {
         StringBuilder bonuses = new StringBuilder("bonuses=");
         List<String> described = gameplay.bonuses().describe(player);
         bonuses.append(described.isEmpty() ? "none" : String.join("; ", described));
+        List<String> externals = gameplay.externals().describe(player);
+        bonuses.append(" external=").append(externals.isEmpty() ? "none" : String.join("; ", externals));
         double effectiveRecovery = PropertyRegistry.get().rates().recoveryRatePercentPerSecond(player, settings.baseRecoveryRatePercent());
         double effectiveDepletion = gameplay.ticker().effectiveRate(player);
         return Arrays.asList(
