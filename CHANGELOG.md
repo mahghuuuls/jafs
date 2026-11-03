@@ -2,6 +2,21 @@
 
 All notable changes to Just Another Food System. The format follows Keep a Changelog; versions follow Semantic Versioning.
 
+## [1.1.0] - 2026-11-03
+
+### Added
+
+- Eight attribute-backed properties for food definitions: `jafs:movement_speed`, `jafs:attack_damage`, `jafs:attack_speed`, `jafs:armor`, `jafs:armor_toughness`, `jafs:knockback_resistance`, `jafs:luck`, `jafs:block_reach`. Each is applied as saved attribute modifiers on the player (one flat, one percent), shown in the tooltip with its unit and color, and removed at expiry, death, Bitter Berries, and `/jafs clear`.
+- Seven more properties that exist only with Potion Core loaded: `jafs:jump_height`, `jafs:dig_speed`, `jafs:projectile_damage`, `jafs:magic_damage`, `jafs:damage_resistance` (positive is less damage taken), `jafs:magic_shielding`, `jafs:step_height`. Without Potion Core a definition naming one is reported at load and that modifier is skipped; the rest of the definition still applies.
+- Per-property limits for every modifier (README table); an amount outside them is reported with the definition id and field.
+- Setworks effect kind `jafs:property`: an equipment-set bonus can grant a recovery rate or food depletion rate bonus in percent while the set is worn; several bonuses add up; `/jafs inspect` lists each bonus by its Setworks instance id under `external=`.
+- Two more examples in `foods-examples.json` (an attribute food and a Potion Core food).
+
+### Compatibility
+
+- Optional [Potion Core](https://www.curseforge.com/minecraft/mc-mods/potion-core) 1.9 and optional [Setworks](https://github.com/mahghuuuls/setworks) 1.0.0, both detected at runtime (`after:setworks` ordering; nothing from either mod is referenced).
+- Tested on Forge 2847 (development client and dedicated server) and on Cleanroom 0.7.14 with Potion Core, Setworks, and CraftTweaker present.
+
 ## [1.0.0] - 2026-10-20
 
 First release.
