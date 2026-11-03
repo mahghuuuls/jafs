@@ -41,10 +41,10 @@ dependencies {
 
     // Agent Diagnostics Toolkit, development runtime only; never packaged or declared.
     // The jar is not committed. Place it in libs/ before runClient or runServer:
-    //   agenttesttoolkit-1.2.0.jar, 248481 bytes
-    //   sha256 fbb9f55a731059e0b82b548bc2ea721e285268fafa30d1a469df9f1754bf5aa7
-    if (file('libs/agenttesttoolkit-1.2.0.jar').exists()) {
-        runtimeOnly rfg.deobf(files('libs/agenttesttoolkit-1.2.0.jar'))
+    //   agenttesttoolkit-1.3.0.jar, 334962 bytes
+    //   sha256 bb9e311297dca03e034283e77fa3c85e63e72345878f598bc00672cd69d39e57
+    if (file('libs/agenttesttoolkit-1.3.0.jar').exists()) {
+        runtimeOnly rfg.deobf(files('libs/agenttesttoolkit-1.3.0.jar'))
     }
 
     // Inhibited, development runtime only for the recovery-blocking checks; never packaged or declared
