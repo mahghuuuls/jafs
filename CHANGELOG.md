@@ -2,6 +2,17 @@
 
 All notable changes to Just Another Food System. The format follows Keep a Changelog; versions follow Semantic Versioning.
 
+## [1.2.0] - 2026-11-09
+
+### Added
+
+- Statusworks contribution types `jafs:recovery_rate` and `jafs:depletion_rate`: a Statusworks status, pool, or mark can raise or lower a player's recovery rate or food depletion rate in percent while it is active, scaled as the status defines (fixed, per stack, per amount, per fill). Contributions add up with food and Setworks bonuses; `/jafs inspect` lists each one by its Statusworks key under `jafs:statusworks`. A value past the property limits (-1000 to 1000) is used at the nearer limit and logged once per player and key.
+
+### Compatibility
+
+- Optional [Statusworks](https://www.curseforge.com/minecraft/mc-mods/statusworks) 1.2.0 or newer, detected at runtime (`after:statusworks` ordering, no version range in the metadata). With an older Statusworks, one warning at startup and nothing is registered.
+- Tested on Forge 2847 (development client with Statusworks 1.2.0, Setworks 1.1.0, and CraftTweaker 4.1.20.718) and on Cleanroom 0.7.14 with Statusworks and CraftTweaker present.
+
 ## [1.1.0] - 2026-11-03
 
 ### Added

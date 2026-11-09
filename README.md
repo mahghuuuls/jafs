@@ -6,11 +6,12 @@ Player-facing description: [MOD-PAGE.md](MOD-PAGE.md). Release history: [CHANGEL
 
 ## Install side
 
-- Mod id `jafs`, version 1.1.0. Needed on the server and on every client. Requires Forge 14.23.5.2847 or newer (minimum, no upper bound; built against 2847, tested on 2847 and on Cleanroom 0.6.13 and 0.7.14). No other mod is required.
+- Mod id `jafs`, version 1.2.0. Needed on the server and on every client. Requires Forge 14.23.5.2847 or newer (minimum, no upper bound; built against 2847, tested on 2847 and on Cleanroom 0.6.13 and 0.7.14). No other mod is required.
 - Gameplay runs on the server: one service per player decides meals, timers, bonuses, and recovery. Clients receive the definitions at login and a snapshot of their own foods, which they count down locally; the server corrects them.
 - Optional [Inhibited](https://www.curseforge.com/minecraft/mc-mods/inhibited): recovery pauses while the `inhibited:inhibited` effect is active (`inhibitedBlocksRecovery`). Detected at runtime; nothing from it is referenced.
 - Optional [Potion Core](https://www.curseforge.com/minecraft/mc-mods/potion-core): seven more properties (jump height, dig speed, projectile damage, magic damage, damage resistance, magic shielding, step height) exist only while Potion Core is loaded. Without it a definition naming one gets a warning at load with the definition id and the property id, that modifier is skipped, and the rest of the definition still works. Detected at runtime; nothing from it is referenced.
 - Optional [Setworks](https://github.com/mahghuuuls/setworks): the mod registers the Setworks effect kind `jafs:property`, so an equipment-set bonus can grant a recovery rate or food depletion rate bonus (percent) while the set is worn. Several bonuses add up; `/jafs inspect` names each one. Detected at runtime; nothing from it is referenced.
+- Optional [Statusworks](https://www.curseforge.com/minecraft/mc-mods/statusworks) 1.2.0 or newer: the mod registers two Statusworks contribution types, `jafs:recovery_rate` and `jafs:depletion_rate`, so a status, pool, or mark can raise or lower a player's recovery rate or food depletion rate in percent while it is active, scaled as the status defines (fixed, per stack, per amount, per fill). Contributions add up with each other, with food, and with Setworks bonuses; `/jafs inspect` lists each one by its Statusworks key under `jafs:statusworks`. A value past -1000 or 1000 is used at that limit, with one warning per player and key. Players only. Maximum health and the attribute-backed properties are reached through Statusworks' own attribute contributions. With an older Statusworks one warning at startup says the version is too old and nothing is registered. Detected at runtime; its classes load only when it is present.
 - With [Recovery and Hunger Tweaks](https://www.curseforge.com/minecraft/mc-mods/recovery-and-hunger-tweaks) loaded, a startup warning and an operator notice at login say that both mods heal and one should be removed; the mod keeps running.
 - Incompatible by design, not blocked at load: other mods that remove or pin hunger, and hunger overhauls that depend on [AppleCore](https://www.curseforge.com/minecraft/mc-mods/applecore). AppleCore itself coexists. RPG-Hud users disable its hunger element themselves; AppleSkin and LemonSkin food values and the hearts preview are meaningless here and are turned off in their config.
 - Removing the mod from an existing world leaves the last maximum-health bonus on each player as a saved attribute modifier until something edits it, as with other attribute-modifying mods.
@@ -80,10 +81,10 @@ All at permission level 2.
 
 ## Addon API
 
-The `com.mahghuuuls.jafs.api` package is the public, stable surface (`JafsApi.API_VERSION` is `1.0`); an addon declares `required-after:jafs` and calls it from its own pre-init on.
+The `com.mahghuuuls.jafs.api` package is the public, stable surface (`JafsApi.API_VERSION` is `1.0`); an addon declares `required-after:jafs` and calls it from its own pre-init on. No Maven artifact is published: compile against the release jar, which holds the API.
 
 - `JafsApi.registerProperty(PropertySpec, IPropertyApplier)`: a property with id, display name, unit, default color, supported operations, and limits, plus the applier that receives the per-player sums. Registration closes when loading completes. Every property JAFS ships goes through the same path, the attribute-backed ones included.
-- `JafsApi.registerRateModifierProvider(id, IRateModifierProvider)`: per-player percent contributions to recovery rate and depletion rate from equipment, effects, or anything else; `markDirty(player)` when a contribution changes. The Setworks bridge is one such provider, built into the mod and registered only when Setworks is present.
+- `JafsApi.registerRateModifierProvider(id, IRateModifierProvider)`: per-player percent contributions to recovery rate and depletion rate from equipment, effects, or anything else; `markDirty(player)` when a contribution changes. The Setworks and Statusworks bridges are such providers, built into the mod and registered only when their mod is present.
 - `JafsApi.getFoodService()` (server): `getActiveFoods`, `getPropertyValue`, `canPay`, `pay` (a duration payment, atomic across all foods), `clearAll`.
 - `api.client`: `ClientFoodApi.getSnapshot()` for addon HUDs; `FoodHudRenderEvent`, cancelable, to replace the HUD.
 
@@ -91,13 +92,13 @@ The repository holds a development-only fixture addon (`-PjafsFixture`) that exe
 
 ## Scope boundaries
 
-- No food definitions, balance, recipes, or integrations ship with the mod; addons and packs own them.
+- No food definitions, balance, or recipes ship with the mod; addons and packs own them. The built-in links to Inhibited, Potion Core, Setworks, and Statusworks are optional and add no content of their own.
 - Hunger is pinned, not configurable; saturation and exhaustion do nothing.
 - Configuration is read on the server; clients get the definitions over the network, so a pack ships `jafs.cfg` and `foods.json` server side and the client file only for HUD preferences.
 
 ## Development
 
-Standard Forge 1.12.2 project on the CleanroomMC ForgeDevEnv template: `./gradlew build` produces `build/libs/jafs-1.1.0.jar` (`-PjafsFixture` also builds the fixture addon); `./gradlew runClient` and `./gradlew runServer` start the development runtimes. Development-only jars go in the git-ignored `libs/` folder (see `gradle/scripts/dependencies.gradle`; the Setworks development jar is required to compile the compat package, Potion Core and Inhibited are runtime-only). Unit tests run without Minecraft and cover the definition grammar and validation, slot and eligibility rules, bonus math, timers and payments, recovery, reload consequences, the HUD layout and time format, the food report, the attribute property table and applier, and the Setworks effect kind and ledger.
+Standard Forge 1.12.2 project on the CleanroomMC ForgeDevEnv template: `./gradlew build` produces `build/libs/jafs-1.2.0.jar` (`-PjafsFixture` also builds the fixture addon); `./gradlew runClient` and `./gradlew runServer` start the development runtimes. Development-only jars go in the git-ignored `libs/` folder (see `gradle/scripts/dependencies.gradle`; the Setworks and Statusworks development jars are required to compile their compat packages, Potion Core and Inhibited are runtime-only; CraftTweaker is a runtime-only Gradle dependency from `maven.blamejared.com`, downloaded once). Unit tests run without Minecraft and cover the definition grammar and validation, slot and eligibility rules, bonus math, timers and payments, recovery, reload consequences, the HUD layout and time format, the food report, the attribute property table and applier, the Setworks effect kind and ledger, the Statusworks contribution types, ledger, and version check, and the package import rules (another mod's classes named only in its compat package).
 
 ## License
 

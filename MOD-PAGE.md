@@ -7,11 +7,11 @@ This mod replaces hunger with timed food bonuses, in the style of Valheim. Hunge
 - A player holds up to three active foods at once (configurable). Each one keeps its full bonus until its time runs out, then the bonus is gone and a message says so.
 - A food can be eaten again once it is below half of its duration (configurable). Eating it earlier is refused with a short message. When every slot is full, a new food replaces the active food that can be eaten again and has the least time left.
 - Bonuses come as properties: maximum health, health recovery, food timer speed, and a set of player stats such as movement speed, attack damage, and armor (the full list is below). Several foods add up. Addon mods can add their own properties.
-- The Hunger effect makes every food timer run faster, one step per effect level.
+- The Hunger effect speeds up every food timer, by default by half the normal speed per effect level (configurable).
 - A small HUD by the hotbar shows each active food's icon with its time left. The time turns yellow once the food can be eaten again and red in its last minute. Its position, direction, and size are set in the mod's config screen.
 - The tooltip of a configured food lists its bonuses and duration. Other edible items say that no bonus is configured.
-- Bitter Berries, the one item added, clear every active food at once. They drop now and then from tall grass and ferns broken by hand.
-- The hunger bar is hidden. Death clears active foods unless the pack keeps them.
+- Bitter Berries, the one item added, clear every active food at once. They drop now and then from tall grass and ferns broken without shears.
+- The hunger bar is hidden. Death clears active foods unless `keepFoodsOnDeath` is on in `jafs.cfg`.
 
 **Health recovery**
 
@@ -19,7 +19,7 @@ Health comes back on its own, with or without food. After ten seconds without da
 
 **For modpack creators**
 
-Food does nothing until you write definitions. Edit `config/jafs/foods.json` on the server, then run `/jafs reload` (or restart). `foods-examples.json` next to it has copy-ready entries with comments. One entry looks like this:
+Food gives no bonus until you write definitions; a food's own effects, such as a golden apple's, still apply. Edit `config/jafs/foods.json` on the server, then run `/jafs reload` (or restart). `foods-examples.json` next to it has copy-ready entries with comments. One entry looks like this:
 
 ```json
 {
@@ -33,13 +33,13 @@ Food does nothing until you write definitions. Edit `config/jafs/foods.json` on 
 }
 ```
 
-A definition can match several items, an item variant, an item by NBT (a potion by its type), or a cake-like block. Drinks and potions are ordinary items until a definition names them. `config/jafs/jafs.cfg` holds the slot count, the eating threshold, the recovery delay and rate, and the timer speed. Each property has its limits (listed in the README); an amount past a limit is reported and that bonus is skipped. Bad entries are reported in the log and skipped; the game never crashes over a definition.
+A definition can match several items, an item variant, an item by NBT (a potion by its type), or a cake-like block. Drinks and potions are ordinary items until a definition names them. `config/jafs/jafs.cfg` holds the slot count, the eating threshold, the recovery delay and rate, and the timer speed. Each property has its limits (listed in the [README](https://github.com/mahghuuuls/jafs#configuration)); an amount past a limit is reported and that bonus is skipped. Bad entries are reported in the log and skipped; the game never crashes over a definition.
 
 **Properties a food can change**
 
 Each modifier names a property, an operation (`flat` adds a fixed amount, `percent` scales the current value), and an amount. Always available:
 
-- `jafs:max_health`: maximum health, in hearts worth of health points (flat) or percent.
+- `jafs:max_health`: maximum health, in health points, where 2 points are one heart (flat), or percent.
 - `jafs:recovery_rate`: how fast health comes back, in percent of the base rate.
 - `jafs:depletion_rate`: how fast every food timer counts down, in percent of the base speed.
 - `jafs:movement_speed`: walking and sprinting speed, in percent.
@@ -86,6 +86,25 @@ Setworks.fullSetBonus("mypack:iron_endurance", "mypack:iron_armor", "Full set: f
     .effect("jafs:property", {property: "jafs:depletion_rate", amount: "-30"});
 ```
 
+**Statuses with Statusworks**
+
+With [Statusworks](https://www.curseforge.com/minecraft/mc-mods/statusworks) 1.2.0 or newer installed, a status, pool, or mark on a player can speed up or slow down health recovery and food timers while it is active. A Statusworks definition can use one of these two contribution types, with a value in percent:
+
+- `jafs:recovery_rate`: faster or slower health recovery.
+- `jafs:depletion_rate`: faster or slower food timers.
+
+The value can be fixed or scale with stacks, a pool's amount, or its fill, as Statusworks allows. For maximum health and the other stats, use Statusworks' own attribute contributions. Statuses add up with each other, with food, and with set bonuses, and `/jafs inspect` lists each one. A value below -1000 or above 1000 percent is capped at that limit (unlike a food amount, which is skipped), and the log warns once per status for each player. The types work from Statusworks' CraftTweaker scripts and its Java API alike. A small CraftTweaker script, in `scripts/`:
+
+```
+import mods.statusworks.Statuses;
+
+// +20% recovery rate for 5 minutes (6000 ticks)
+Statuses.define("mypack:well_fed")
+    .defaultDuration(6000)
+    .contributeType("jafs:recovery_rate", "fixed", 20.0)
+    .register();
+```
+
 **Food report**
 
 `/jafs report` writes a spreadsheet (`config/jafs/jafs-foods-report.csv`) of every edible item in your pack: its mod, its vanilla hunger and saturation values, the definition that covers it, its duration and bonuses, and whether it is still unconfigured. Open it in any spreadsheet program to see what your pack still needs and to plan its food balance.
@@ -99,6 +118,11 @@ Setworks.fullSetBonus("mypack:iron_endurance", "mypack:iron_armor", "Full set: f
 - With [Inhibited](https://www.curseforge.com/minecraft/mc-mods/inhibited) installed, recovery pauses while the Inhibited effect is active (can be turned off).
 - With [Potion Core](https://www.curseforge.com/minecraft/mc-mods/potion-core) installed, seven more stats can be food bonuses (see the property list above).
 - With [Setworks](https://github.com/mahghuuuls/setworks) installed, set bonuses can raise or lower recovery rate and food timer speed (see above).
+- With [Statusworks](https://www.curseforge.com/minecraft/mc-mods/statusworks) 1.2.0 or newer installed, statuses can do the same (see above). An older Statusworks is ignored, and the log says so.
+
+**For mod developers**
+
+The Java API in `com.mahghuuuls.jafs.api` (version 1.0) lets an addon register its own properties and recovery or timer rate sources, read and pay food time on the server, and draw its own HUD from a client snapshot. It ships in the mod jar; declare `required-after:jafs`. See the [Addon API section of the README](https://github.com/mahghuuuls/jafs#addon-api).
 
 **Install**
 
