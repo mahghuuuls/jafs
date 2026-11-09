@@ -31,7 +31,7 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
  */
 @Mod(modid = Tags.MOD_ID, name = Tags.MOD_NAME, version = Tags.VERSION,
         acceptedMinecraftVersions = "[1.12.2]",
-        dependencies = "required-after:forge@[14.23.5.2847,);after:inhibited;after:setworks")
+        dependencies = "required-after:forge@[14.23.5.2847,);after:inhibited;after:setworks;after:statusworks")
 public class JustAnotherFoodSystemMod {
 
     @SidedProxy(clientSide = "com.mahghuuuls.jafs.client.ClientProxy", serverSide = "com.mahghuuuls.jafs.CommonProxy")

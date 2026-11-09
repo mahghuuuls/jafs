@@ -17,6 +17,17 @@ repositories {
     exclusiveContent {
         forRepository {
             maven {
+                name 'BlameJared'
+                url 'https://maven.blamejared.com'
+            }
+        }
+        filter {
+            includeGroup 'CraftTweaker2'
+        }
+    }
+    exclusiveContent {
+        forRepository {
+            maven {
                 name 'Modrinth'
                 url 'https://api.modrinth.com/maven'
             }
@@ -41,10 +52,10 @@ dependencies {
 
     // Agent Diagnostics Toolkit, development runtime only; never packaged or declared.
     // The jar is not committed. Place it in libs/ before runClient or runServer:
-    //   agenttesttoolkit-1.3.0.jar, 334962 bytes
-    //   sha256 bb9e311297dca03e034283e77fa3c85e63e72345878f598bc00672cd69d39e57
-    if (file('libs/agenttesttoolkit-1.3.0.jar').exists()) {
-        runtimeOnly rfg.deobf(files('libs/agenttesttoolkit-1.3.0.jar'))
+    //   agenttesttoolkit-1.6.0.jar, 515225 bytes
+    //   sha256 dc23d8c23f03eec18417cca99c870d3af75e8d29c3ebd4ca45c57b9dba44789c
+    if (file('libs/agenttesttoolkit-1.6.0.jar').exists()) {
+        runtimeOnly rfg.deobf(files('libs/agenttesttoolkit-1.6.0.jar'))
     }
 
     // Inhibited, development runtime only for the recovery-blocking checks; never packaged or declared
@@ -63,16 +74,37 @@ dependencies {
 
     // Setworks, whose API the compat package compiles against; development only, never packaged or shipped
     // (JAFS declares after:setworks and loads the compat class only when the mod is present):
-    //   setworks-1.0.0-dev.jar (the deobfuscated development jar of Setworks 1.0.0), 485227 bytes,
-    //   sha256 780212d6a5f7e69b4685f7c3ea294ac51a9bc7da521dd61a4fc0eaecb8b74dd2
+    //   setworks-1.1.0-dev.jar (the deobfuscated development jar of Setworks 1.1.0), 501306 bytes,
+    //   sha256 881585e4cb6bf7a21edcd9b54e451fe7c2481a27da24e4acda27e7820eb26688
     // Unlike the two runtime-only jars above, this one is needed to compile: the build stops with a clear message without it.
-    if (!file('libs/setworks-1.0.0-dev.jar').exists()) {
-        throw new GradleException("libs/setworks-1.0.0-dev.jar is missing: copy the Setworks 1.0.0 development jar (build/libs of the Setworks project) into libs/; the compat package compiles against its API")
+    // The effect kind uses only the API that Setworks 1.0.0 already had, so 1.0.0 stays supported.
+    if (!file('libs/setworks-1.1.0-dev.jar').exists()) {
+        throw new GradleException("libs/setworks-1.1.0-dev.jar is missing: copy the Setworks 1.1.0 development jar (build/libs of the Setworks project) into libs/; the compat package compiles against its API")
     }
-    compileOnly rfg.deobf(files('libs/setworks-1.0.0-dev.jar'))
-    runtimeOnly rfg.deobf(files('libs/setworks-1.0.0-dev.jar'))
-    testCompileOnly rfg.deobf(files('libs/setworks-1.0.0-dev.jar'))
-    testRuntimeOnly rfg.deobf(files('libs/setworks-1.0.0-dev.jar'))
+    compileOnly rfg.deobf(files('libs/setworks-1.1.0-dev.jar'))
+    runtimeOnly rfg.deobf(files('libs/setworks-1.1.0-dev.jar'))
+    testCompileOnly rfg.deobf(files('libs/setworks-1.1.0-dev.jar'))
+    testRuntimeOnly rfg.deobf(files('libs/setworks-1.1.0-dev.jar'))
+
+    // Statusworks, whose API the compat package compiles against; development only, never packaged or shipped
+    // (JAFS declares after:statusworks and loads the compat bridge only when the mod is present; the bridge checks for
+    // 1.2.0 or newer before registering, which is safe because the API it links to is the same in 1.0.0, 1.1.0, and 1.2.0):
+    //   statusworks-1.2.0-dev.jar (the deobfuscated development jar of Statusworks 1.2.0), 486368 bytes,
+    //   sha256 b44fe6ba80f01289bf6a24523172259057eb526e0bff5a01825fa74785ea8877
+    if (!file('libs/statusworks-1.2.0-dev.jar').exists()) {
+        throw new GradleException("libs/statusworks-1.2.0-dev.jar is missing: copy the Statusworks 1.2.0 development jar (build/libs of the Statusworks project) into libs/; the compat package compiles against its API")
+    }
+    compileOnly rfg.deobf(files('libs/statusworks-1.2.0-dev.jar'))
+    runtimeOnly rfg.deobf(files('libs/statusworks-1.2.0-dev.jar'))
+    testCompileOnly rfg.deobf(files('libs/statusworks-1.2.0-dev.jar'))
+    testRuntimeOnly rfg.deobf(files('libs/statusworks-1.2.0-dev.jar'))
+
+    // CraftTweaker 4.1.20.718, development runtime only, for the Setworks and Statusworks test scripts; never packaged
+    // or declared. Its author's Maven build (SRG-named; it loads in the development runtime, as in the Statusworks
+    // project) with its two library parts, ZenScript and CraftTweaker2-API, brought along by the pom; declared without
+    // rfg.deobf(). The CurseForge jar cannot go through rfg.deobf: it holds META-INF/crafttweaker_at.cfg and two FML
+    // cache files twice, and the rewrite stops there. A fresh machine needs network access for this one download.
+    runtimeOnly 'CraftTweaker2:CraftTweaker2-MC1120-Main:1.12-4.1.20.718'
 
     // Example - Dependency descriptor:
     // 'com.google.code.gson:gson:2.8.6' << group: com.google.code.gson, name:gson, version:2.8.6

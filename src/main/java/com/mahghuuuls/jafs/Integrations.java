@@ -3,6 +3,7 @@ package com.mahghuuuls.jafs;
 import com.mahghuuuls.jafs.compat.inhibited.InhibitedRecoveryGate;
 import com.mahghuuuls.jafs.compat.rht.RhtNotice;
 import com.mahghuuuls.jafs.compat.setworks.SetworksBridge;
+import com.mahghuuuls.jafs.compat.statusworks.StatusworksBridge;
 import com.mahghuuuls.jafs.diagnostic.Diag;
 import com.mahghuuuls.jafs.gameplay.JafsGameplay;
 import net.minecraft.potion.Potion;
@@ -35,6 +36,10 @@ public final class Integrations {
         if (Loader.isModLoaded(SetworksBridge.MOD_ID)) {
             // The bridge class is loaded only here, so a game without Setworks never touches its API.
             SetworksBridge.register();
+        }
+        if (Loader.isModLoaded(StatusworksBridge.MOD_ID)) {
+            // The bridge class is loaded only here, so a game without Statusworks never touches its API.
+            StatusworksBridge.register();
         }
     }
 }
